@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 [build]
   base = "app/app"
   command = "npm run build"
@@ -8,3 +9,15 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+=======
+[build]
+  base = "app/app"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+>>>>>>> d9bda74656ecb045cfdf78ccbbc0dbe056559a33
