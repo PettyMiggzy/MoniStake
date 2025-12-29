@@ -191,8 +191,7 @@ export default function Page() {
 
             <div className="hidden sm:flex items-center gap-3">
               <div className="h-12 w-12 rounded-2xl overflow-hidden border border-stroke bg-white/5 shadow-[0_0_40px_rgba(168,85,247,0.22)]">
-                <img src="/Moni.png" alt="MONI" className="h-full w-full object-cover" />
-              </div>
+                          </div>
               <div className="text-xs text-sub">
                 Fees<br />
                 <span className="text-ink font-semibold">{(normalFeeBps / 100).toFixed(2)}%</span> unstake → pool<br />
