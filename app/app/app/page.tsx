@@ -348,14 +348,14 @@ export default function Page() {
               </button>
 
               <div className="mt-3 text-[11px] text-white/55">
-                Anyone can add rewards. If tokens are sent directly to the contract, press <b>Sync Rewards</b>.
+                Anyone can add rewards. If tokens are sent directly to the contract press <b>Sync Rewards</b>.
               </div>
             </div>
           </Card>
         </div>
 
         <div className="mt-10 pb-10 text-center text-xs text-white/40">
-          Built by <span className="text-white/60 font-semibold">Monshi</span>
+          Built by <span className="text-white/60 font-semibold">King Petty</span>
         </div>
       </div>
     </main>
