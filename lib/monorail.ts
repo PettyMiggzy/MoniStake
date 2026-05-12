@@ -64,14 +64,21 @@ export async function monorailQuote(args: {
   sender: string;
   slippageBps?: number;
   deadlineSec?: number;
+  maxHops?: number;
 }): Promise<MonoQuote> {
   const params = new URLSearchParams({
     from: args.from || NATIVE_ZERO,
     to: args.to,
     amount: String(args.amount),
     sender: args.sender,
-    slippage: String(args.slippageBps ?? 100),
+    slippage: String(args.slippageBps ?? 300),
     source: MONORAIL.APP_ID,
+    // Cap hops at 2 by default. Multi-hop routes through random
+    // intermediary tokens are how aggregators rug low-liq pairs
+    // like MONI — compounding slippage across hops makes a 1 MON
+    // swap quote ~5000 MONI optimistically and deliver ~3500,
+    // tripping the slippage check. 2 hops = MON wrap + direct pool.
+    max_hops: String(args.maxHops ?? 2),
   });
   if (args.deadlineSec) params.set("deadline", String(args.deadlineSec));
   const ctrl = new AbortController();
@@ -135,13 +142,15 @@ export function explainRevert(err: unknown): string {
     low.includes("amount_out_min") ||
     low.includes("slippage")
   )
-    return "Slippage too tight — price moved between quote and execution. Try 3% or 5%.";
+    return "Slippage too tight — price moved between quote and execution. Try 10% slippage on thin-liquidity tokens.";
   if (low.includes("expired") || low.includes("deadline"))
     return "Tx deadline passed. Retry.";
   if (low.includes("user denied") || low.includes("user rejected"))
     return "Wallet signature cancelled.";
+  if (low.includes("aggregate") && low.includes("reverted"))
+    return "Aggregator route reverted on-chain — likely thin liquidity in one of the hops. Bump slippage to 10% and retry.";
   if (low.includes("execution reverted") && !low.includes("reason"))
-    return "Trade simulation failed. Try a smaller amount or larger slippage.";
+    return "Trade simulation failed. The route likely passes through a low-liquidity pool. Try bumping slippage to 10%, or a smaller amount.";
   return m || "Unknown error";
 }
 

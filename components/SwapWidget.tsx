@@ -66,7 +66,7 @@ export default function SwapWidget({
   const [from, setFrom] = useState<MonoToken>(defaultFrom ?? KNOWN_TOKENS[0]);
   const [to, setTo] = useState<MonoToken>(defaultTo ?? KNOWN_TOKENS[1]);
   const [amountIn, setAmountIn] = useState("");
-  const [slipBps, setSlipBps] = useState(300);
+  const [slipBps, setSlipBps] = useState(500);
   const [quote, setQuote] = useState<MonoQuote | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [quoteErr, setQuoteErr] = useState<string | null>(null);
@@ -264,6 +264,10 @@ export default function SwapWidget({
     return `${from.symbol} → ${to.symbol} via ${proto}`;
   }, [quote, from.symbol, to.symbol]);
 
+  // Count hops in the chosen route — used to warn about multi-hop on
+  // thin-liquidity tokens (compounding slippage = high revert risk)
+  const hopCount = quote?.routes?.[0]?.length ?? 1;
+
   const impact = parseFloat(
     quote?.compound_impact ??
       quote?.routes?.[0]?.[0]?.splits?.[0]?.price_impact ??
@@ -390,6 +394,17 @@ export default function SwapWidget({
             <span className="font-mono text-white">{routeLabel}</span>
           </div>
           <div className="flex justify-between py-0.5">
+            <span>hops</span>
+            <span
+              className={`font-mono ${
+                hopCount >= 3 ? "text-yellow-300" : "text-white"
+              }`}
+            >
+              {hopCount} {hopCount === 1 ? "step" : "steps"}
+              {hopCount >= 3 ? " ⚠" : ""}
+            </span>
+          </div>
+          <div className="flex justify-between py-0.5">
             <span>min received</span>
             <span className="font-mono text-white">
               {fmt(quote.min_output_formatted)} {to.symbol}
@@ -405,6 +420,15 @@ export default function SwapWidget({
               {impact ? `${impact.toFixed(2)}%` : "—"}
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Multi-hop warning — compounding slippage is the #1 revert cause on
+          thin-liquidity tokens like MONI */}
+      {quote && hopCount >= 3 && slipBps < 1000 && (
+        <div className="mt-2 rounded-xl border border-yellow-400/40 bg-yellow-500/10 p-3 text-[11px] text-yellow-100">
+          ⚠ Multi-hop route ({hopCount} steps). Slippage compounds across hops
+          on thin-liquidity pairs — bump to <b>10%</b> for safer execution.
         </div>
       )}
 
