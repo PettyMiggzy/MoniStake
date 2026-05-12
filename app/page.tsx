@@ -104,7 +104,7 @@ export default function Home() {
 
       <Header />
 
-      <div className="mx-auto max-w-5xl px-5 py-10">
+      <div className="mx-auto max-w-6xl px-5 py-8 md:py-12">
         {/* CTO BANNER */}
         <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-purple-400/30 bg-gradient-to-r from-purple-500/15 to-fuchsia-500/15 px-4 py-2.5 text-xs">
           <span className="rounded-md bg-purple-500/30 px-2 py-0.5 font-bold tracking-wider text-purple-100">
@@ -116,32 +116,38 @@ export default function Home() {
         </div>
 
         {/* HERO */}
-        <section className="mb-10 flex flex-col items-center gap-6 text-center md:flex-row md:items-center md:text-left">
-          <img
-            src="/Moni.png"
-            alt="MONI the Yeti"
-            className="h-40 w-40 rounded-3xl object-cover ring-4 ring-purple-400/30 shadow-[0_0_60px_rgba(168,85,247,0.5)] md:h-48 md:w-48"
-          />
-          <div className="flex-1">
-            <h1 className="text-5xl font-extrabold tracking-tight md:text-6xl">
+        <section
+          id="about"
+          className="mb-12 grid items-center gap-8 md:mb-16 md:grid-cols-2 md:gap-10"
+        >
+          <div className="order-2 md:order-1">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-purple-400/30 bg-purple-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-purple-200">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-purple-400" />
+              </span>
+              Live on Monad mainnet
+            </div>
+            <h1 className="text-5xl font-extrabold leading-[0.95] tracking-tight md:text-7xl">
               <span className="bg-gradient-to-r from-purple-300 via-fuchsia-300 to-yellow-200 bg-clip-text text-transparent">
                 MONI
-              </span>{" "}
+              </span>
+              <br />
               <span className="text-white">the Yeti</span>
             </h1>
-            <div className="mt-2 text-sm uppercase tracking-[0.25em] text-purple-200/80">
-              Purple. Pit Vipers. Paint. Pump.
+            <div className="mt-3 text-sm uppercase tracking-[0.25em] text-purple-200/80 md:text-base">
+              Purple · Pit Vipers · Paint · Pump
             </div>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-white/75">
+            <p className="mt-5 max-w-lg text-base leading-relaxed text-white/75 md:text-lg">
               The purple spirit of the Monad community. Born on a neighboring
               mountain, climbing this one — chain on his neck, brush in his
-              hand. The dev left. The Yeti stayed.
+              hand. <b className="text-white">The dev left. The Yeti stayed.</b>
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="mt-7 flex flex-wrap items-center gap-3">
               <a
                 href="/swap"
-                className="rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-500 px-7 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] hover:brightness-110"
+                className="rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-500 px-8 py-3.5 text-sm font-bold uppercase tracking-[0.18em] text-white shadow-[0_10px_30px_rgba(168,85,247,0.4)] hover:brightness-110"
               >
                 Buy $MONI →
               </a>
@@ -149,10 +155,29 @@ export default function Home() {
                 href={`https://dexscreener.com/monad/${DEXSCREENER_PAIR}`}
                 target="_blank"
                 rel="noopener"
-                className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold uppercase tracking-wider text-white/85 hover:bg-white/10"
+                className="rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.15em] text-white/85 hover:bg-white/10"
               >
                 Chart ↗
               </a>
+            </div>
+
+            <div className="mt-5 text-[11px] uppercase tracking-[0.2em] text-white/45">
+              No empty promises · No false summits
+            </div>
+          </div>
+
+          {/* Hero image */}
+          <div className="order-1 md:order-2 flex justify-center md:justify-end">
+            <div className="relative">
+              <div
+                aria-hidden
+                className="absolute -inset-8 rounded-full bg-gradient-radial from-purple-500/40 via-purple-500/10 to-transparent blur-3xl"
+              />
+              <img
+                src="/Moni.png"
+                alt="MONI the Yeti"
+                className="relative h-56 w-56 rounded-[2rem] object-cover ring-4 ring-purple-400/30 shadow-[0_0_80px_rgba(168,85,247,0.5)] md:h-72 md:w-72"
+              />
             </div>
           </div>
         </section>

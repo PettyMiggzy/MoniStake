@@ -224,10 +224,18 @@ export default function SwapWidget({
         }
       }
       setStatus({ kind: "info", msg: "Sign the swap in your wallet…" });
+      // Use Monorail's gas estimate + 20% buffer instead of letting viem
+      // auto-estimate. Monad's RPC eth_estimateGas can return values that
+      // exceed the per-tx limit, producing 'Exceeds transaction gas limit'
+      // errors. Monorail tells us up-front how much gas the route needs.
+      const gasFromQuote = quote.gas_estimate
+        ? BigInt(Math.floor(quote.gas_estimate * 1.2))
+        : 1_500_000n;
       const hash = await sendTransactionAsync({
         to: quote.transaction.to,
         data: quote.transaction.data,
         value: isFromNative ? BigInt(quote.transaction.value) : 0n,
+        gas: gasFromQuote,
       });
       setLastTxHash(hash);
       setStatus({
