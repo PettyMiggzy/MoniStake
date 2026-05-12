@@ -245,7 +245,7 @@ export default function SwapWidget({
       const deadline = Date.now() + 90_000; // 90s max
       while (!cancelled && Date.now() < deadline) {
         try {
-          const receipt = await getReceipt(lastTxHash);
+          const receipt = await getReceipt(lastTxHash!);
           if (receipt && receipt.blockNumber) {
             if (cancelled) return;
             const ok =
