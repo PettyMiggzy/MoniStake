@@ -146,12 +146,10 @@ export default function Page() {
           <span className="rounded-md bg-purple-500/30 px-2 py-0.5 font-bold tracking-wider text-purple-100">CTO</span>
           <span className="text-white/80">community-run · dev left · the Yeti stayed</span>
           <a
-            href={`https://www.chogi.xyz/swap?to=${MONI}`}
-            target="_blank"
-            rel="noopener"
-            className="ml-auto rounded-md border border-white/15 bg-white/5 px-2 py-0.5 font-semibold text-white hover:bg-white/10"
+            href="/swap"
+            className="ml-auto rounded-md border border-purple-300/40 bg-purple-500/20 px-2.5 py-0.5 font-semibold text-white hover:bg-purple-500/30"
           >
-            Buy $MONI ↗
+            Buy $MONI →
           </a>
         </div>
 
