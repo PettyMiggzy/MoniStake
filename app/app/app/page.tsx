@@ -141,14 +141,35 @@ export default function Page() {
       <Header />
 
       <div className="mx-auto max-w-6xl px-5 py-6">
+        {/* CTO BANNER */}
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-purple-400/30 bg-gradient-to-r from-purple-500/15 to-fuchsia-500/15 px-4 py-2.5 text-xs">
+          <span className="rounded-md bg-purple-500/30 px-2 py-0.5 font-bold tracking-wider text-purple-100">CTO</span>
+          <span className="text-white/80">community-run · dev left · the Yeti stayed</span>
+          <a
+            href={`https://www.chogi.xyz/swap?to=${MONI}`}
+            target="_blank"
+            rel="noopener"
+            className="ml-auto rounded-md border border-white/15 bg-white/5 px-2 py-0.5 font-semibold text-white hover:bg-white/10"
+          >
+            Buy $MONI ↗
+          </a>
+        </div>
+
         {/* TOP CARD */}
         <Card>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="text-2xl font-bold">Stake {symbol}</div>
-              <div className="mt-2 text-sm text-white/70 max-w-2xl">
-                Rewards are pool-based (donations + fee flow). No fake APR.
-                Early unstake routes <b>5%</b> to rewards pool and <b>10%</b> to buyback.
+              <div className="flex items-center gap-3">
+                <img src="/Moni.png" alt="MONI the Yeti" className="h-14 w-14 rounded-2xl object-cover ring-2 ring-purple-400/40 shadow-[0_0_24px_rgba(168,85,247,0.4)]" />
+                <div>
+                  <div className="text-2xl font-bold">Stake ${symbol}</div>
+                  <div className="text-xs text-purple-200/80 tracking-wide">LOCK THE YETI · EARN THE YETI</div>
+                </div>
+              </div>
+              <div className="mt-3 text-sm text-white/70 max-w-2xl">
+                Pool-based rewards — funded by donations and early-unstake penalty flow. <b>No fake APR.</b>{" "}
+                Early unstake routes <b>5%</b> to the rewards pool and <b>10%</b> to the buyback wallet.
+                Bow to the chain.
               </div>
 
               <div className="mt-3 text-xs text-white/55">
@@ -158,11 +179,10 @@ export default function Page() {
             </div>
 
             <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <img src="/Moni.png" alt="MONI" className="h-10 w-10 rounded-xl object-cover" />
               <div className="text-xs text-white/70 leading-relaxed">
                 <div><b>Fees</b></div>
                 <div>{(normalFeeBps / 100).toFixed(2)}% unstake → pool</div>
-                <div>{(earlyPoolBps / 100).toFixed(2)}% pool + {(earlyBuyBps / 100).toFixed(2)}% buyback</div>
+                <div>{(earlyPoolBps / 100).toFixed(2)}% early → pool + {(earlyBuyBps / 100).toFixed(2)}% → buyback</div>
               </div>
             </div>
           </div>
