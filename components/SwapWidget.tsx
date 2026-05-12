@@ -11,7 +11,7 @@ import {
 } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { formatUnits, parseUnits, maxUint256 } from "viem";
-import { erc20Abi } from "@/lib/abi";
+import { erc20Abi, wmonAbi, WMON_ADDRESS } from "@/lib/abi";
 import {
   KNOWN_TOKENS,
   NATIVE_ZERO,
@@ -21,10 +21,6 @@ import {
   type MonoToken,
 } from "@/lib/monorail";
 import TokenPicker, { TokenIcon } from "./TokenPicker";
-
-const MONI_ADDR =
-  (process.env.NEXT_PUBLIC_MONI_TOKEN as `0x${string}`) ||
-  ("0x0cc9b2e2acd7bacff79eb7db48f5662b622e7777" as const);
 
 const EXPLORER = "https://monadexplorer.com/tx/";
 
@@ -50,7 +46,13 @@ const SLIPPAGES = [
   { label: "3%", bps: 300 },
   { label: "5%", bps: 500 },
   { label: "10%", bps: 1000 },
+  { label: "20%", bps: 2000 },
 ];
+
+// Quote variant: either Monorail-direct or via-wrap (manual MON→WMON first)
+type QuoteVariant =
+  | { kind: "direct"; quote: MonoQuote }
+  | { kind: "viaWrap"; quote: MonoQuote }; // quote is already WMON→target
 
 export default function SwapWidget({
   defaultFrom,
@@ -60,14 +62,15 @@ export default function SwapWidget({
   defaultTo?: MonoToken;
 }) {
   const { address, isConnected } = useAccount();
-  const { sendTransactionAsync, isPending: isSending } = useSendTransaction();
-  const { writeContractAsync, isPending: isApproving } = useWriteContract();
+  // wagmi v2: both hooks return both sync and async invokers
+  const { sendTransactionAsync } = useSendTransaction();
+  const { writeContractAsync } = useWriteContract();
 
   const [from, setFrom] = useState<MonoToken>(defaultFrom ?? KNOWN_TOKENS[0]);
   const [to, setTo] = useState<MonoToken>(defaultTo ?? KNOWN_TOKENS[1]);
   const [amountIn, setAmountIn] = useState("");
   const [slipBps, setSlipBps] = useState(500);
-  const [quote, setQuote] = useState<MonoQuote | null>(null);
+  const [variant, setVariant] = useState<QuoteVariant | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [quoteErr, setQuoteErr] = useState<string | null>(null);
   const [picking, setPicking] = useState<"in" | "out" | null>(null);
@@ -75,18 +78,18 @@ export default function SwapWidget({
     kind: "info" | "success" | "error";
     msg: string;
   } | null>(null);
+  const [busy, setBusy] = useState(false);
   const [lastTxHash, setLastTxHash] = useState<`0x${string}` | null>(null);
 
-  // Live balances — wagmi handles re-fetches
+  const quote = variant?.quote ?? null;
+  const isViaWrap = variant?.kind === "viaWrap";
+
+  // Live balances
   const isFromNative = from.address === NATIVE_ZERO;
   const isToNative = to.address === NATIVE_ZERO;
-  const { data: nativeBalIn } = useBalance({
+  const { data: nativeBal } = useBalance({
     address,
-    query: { enabled: !!address && isFromNative },
-  });
-  const { data: nativeBalOut } = useBalance({
-    address,
-    query: { enabled: !!address && isToNative },
+    query: { enabled: !!address },
   });
   const { data: erc20BalIn } = useReadContract({
     address: from.address as `0x${string}`,
@@ -104,26 +107,30 @@ export default function SwapWidget({
   });
 
   const balIn = isFromNative
-    ? nativeBalIn?.value ?? 0n
+    ? nativeBal?.value ?? 0n
     : (erc20BalIn as bigint | undefined) ?? 0n;
   const balOut = isToNative
-    ? nativeBalOut?.value ?? 0n
+    ? nativeBal?.value ?? 0n
     : (erc20BalOut as bigint | undefined) ?? 0n;
 
-  // Allowance — only needed for ERC20 → x swaps. Read against the Monorail
-  // router that the quote returns as `transaction.to`.
+  // Allowance — for ERC20→x swaps OR the via-wrap path (WMON→target)
+  const allowanceCheckToken: `0x${string}` | undefined = isViaWrap
+    ? WMON_ADDRESS
+    : isFromNative
+    ? undefined
+    : (from.address as `0x${string}`);
   const router = quote?.transaction.to as `0x${string}` | undefined;
   const { data: allowance } = useReadContract({
-    address: from.address as `0x${string}`,
+    address: allowanceCheckToken,
     abi: erc20Abi,
     functionName: "allowance",
     args: address && router ? [address, router] : undefined,
-    query: { enabled: !!address && !!router && !isFromNative },
+    query: { enabled: !!address && !!router && !!allowanceCheckToken },
   });
 
-  // Quote requests — debounced + race-safe via seq number
+  // Quote requests — debounced + race-safe
   useEffect(() => {
-    setQuote(null);
+    setVariant(null);
     setQuoteErr(null);
     const amt = parseFloat(amountIn);
     if (!amt || amt <= 0) return;
@@ -135,20 +142,49 @@ export default function SwapWidget({
     setQuoting(true);
     const handle = setTimeout(async () => {
       try {
-        const q = await monorailQuote({
+        // First try the direct quote (native or ERC20 as Monorail picks)
+        const direct = await monorailQuote({
           from: from.address,
           to: to.address,
           amount: amountIn,
-          sender:
-            address ?? "0x000000000000000000000000000000000000dEaD",
+          sender: address ?? "0x000000000000000000000000000000000000dEaD",
           slippageBps: slipBps,
         });
         if (cancelled) return;
-        setQuote(q);
+
+        const directHops = direct.routes?.[0]?.length ?? 1;
+
+        // If we're sending native MON AND Monorail picked a 3+ hop route
+        // (likely going through a stablecoin), try the same swap with WMON
+        // as input. That usually returns a clean 1-hop direct pool route.
+        // We'll wrap MON→WMON ourselves in a pre-step.
+        if (isFromNative && directHops >= 3) {
+          try {
+            const viaWrap = await monorailQuote({
+              from: WMON_ADDRESS,
+              to: to.address,
+              amount: amountIn,
+              sender: address ?? "0x000000000000000000000000000000000000dEaD",
+              slippageBps: slipBps,
+            });
+            if (cancelled) return;
+            const wrapHops = viaWrap.routes?.[0]?.length ?? 1;
+            // Use viaWrap only if it actually has fewer hops
+            if (wrapHops < directHops) {
+              setVariant({ kind: "viaWrap", quote: viaWrap });
+              setQuoteErr(null);
+              return;
+            }
+          } catch {
+            // Fall through to direct quote
+          }
+        }
+
+        setVariant({ kind: "direct", quote: direct });
         setQuoteErr(null);
       } catch (e) {
         if (cancelled) return;
-        setQuote(null);
+        setVariant(null);
         setQuoteErr(explainRevert(e));
       } finally {
         if (!cancelled) setQuoting(false);
@@ -158,9 +194,9 @@ export default function SwapWidget({
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [amountIn, from.address, to.address, slipBps, address]);
+  }, [amountIn, from.address, to.address, slipBps, address, isFromNative]);
 
-  // Receipt watcher for the swap tx
+  // Receipt watcher
   const { isLoading: waitingReceipt, isSuccess: receiptSuccess } =
     useWaitForTransactionReceipt({
       hash: lastTxHash ?? undefined,
@@ -170,8 +206,9 @@ export default function SwapWidget({
     if (receiptSuccess && lastTxHash) {
       setStatus({
         kind: "success",
-        msg: `Swap confirmed. Tx: ${lastTxHash.slice(0, 10)}…`,
+        msg: `Swap confirmed.`,
       });
+      setBusy(false);
     }
   }, [receiptSuccess, lastTxHash]);
 
@@ -195,6 +232,8 @@ export default function SwapWidget({
   }
 
   async function doSwap() {
+    setStatus(null);
+    setLastTxHash(null);
     if (!isConnected || !address) {
       setStatus({ kind: "error", msg: "Connect a wallet first." });
       return;
@@ -205,14 +244,75 @@ export default function SwapWidget({
       setStatus({ kind: "error", msg: "Enter an amount." });
       return;
     }
+    if (busy) return;
+    setBusy(true);
+
     try {
-      // ERC20 path: approve if allowance is short
+      const amountWei = parseUnits(amountIn, from.decimals);
+
+      // ─── PATH A: native MON, but going via WMON wrap to avoid bad routes ───
+      if (isViaWrap) {
+        // Step 1: deposit MON into WMON
+        setStatus({
+          kind: "info",
+          msg: "Step 1 of 3 · Wrapping MON to WMON…",
+        });
+        const wrapHash = await writeContractAsync({
+          address: WMON_ADDRESS,
+          abi: wmonAbi,
+          functionName: "deposit",
+          value: amountWei,
+        });
+        setStatus({
+          kind: "info",
+          msg: "Step 1 confirmed. Step 2 of 3 · Approving WMON…",
+        });
+
+        // Step 2: approve WMON to the Monorail router (if not already)
+        const currentAllow = (allowance as bigint | undefined) ?? 0n;
+        if (currentAllow < amountWei) {
+          await writeContractAsync({
+            address: WMON_ADDRESS,
+            abi: erc20Abi,
+            functionName: "approve",
+            args: [quote.transaction.to, maxUint256],
+          });
+        }
+
+        // Step 3: execute the WMON→target swap (Monorail tx)
+        setStatus({
+          kind: "info",
+          msg: "Step 3 of 3 · Signing the swap…",
+        });
+        const gasFromQuote = quote.gas_estimate
+          ? BigInt(Math.floor(quote.gas_estimate * 1.2))
+          : 800_000n;
+        const swapHash = await sendTransactionAsync({
+          to: quote.transaction.to,
+          data: quote.transaction.data,
+          value: 0n,
+          gas: gasFromQuote,
+        });
+        setLastTxHash(swapHash);
+        setStatus({
+          kind: "info",
+          msg: "Swap submitted. Waiting for confirmation…",
+        });
+        // busy will clear when receipt arrives
+        return;
+      }
+
+      // ─── PATH B: standard ERC20→x via Monorail ───
       if (!isFromNative) {
+        // FIX: was `(allowance ?? 0n) < need` originally written with bad
+        // operator precedence — has bitten swaps. Compute the comparison
+        // value explicitly.
         const need = BigInt(quote.input);
-        if ((allowance as bigint | undefined) ?? 0n < need) {
+        const have = (allowance as bigint | undefined) ?? 0n;
+        if (have < need) {
           setStatus({
             kind: "info",
-            msg: `Approving ${from.symbol}… sign in wallet.`,
+            msg: `Approving ${from.symbol}…`,
           });
           await writeContractAsync({
             address: from.address as `0x${string}`,
@@ -220,14 +320,11 @@ export default function SwapWidget({
             functionName: "approve",
             args: [quote.transaction.to, maxUint256],
           });
-          setStatus({ kind: "info", msg: "Approval submitted. Sign the swap…" });
         }
       }
-      setStatus({ kind: "info", msg: "Sign the swap in your wallet…" });
-      // Use Monorail's gas estimate + 20% buffer instead of letting viem
-      // auto-estimate. Monad's RPC eth_estimateGas can return values that
-      // exceed the per-tx limit, producing 'Exceeds transaction gas limit'
-      // errors. Monorail tells us up-front how much gas the route needs.
+
+      // ─── Path C (default): native MON or post-approve ERC20 swap ───
+      setStatus({ kind: "info", msg: "Sign the swap…" });
       const gasFromQuote = quote.gas_estimate
         ? BigInt(Math.floor(quote.gas_estimate * 1.2))
         : 1_500_000n;
@@ -240,10 +337,11 @@ export default function SwapWidget({
       setLastTxHash(hash);
       setStatus({
         kind: "info",
-        msg: `Submitted. Waiting for confirmation…`,
+        msg: "Submitted. Waiting for confirmation…",
       });
     } catch (e) {
       setStatus({ kind: "error", msg: explainRevert(e) });
+      setBusy(false);
     }
   }
 
@@ -251,7 +349,6 @@ export default function SwapWidget({
     if (!isFromNative) {
       setAmountIn(formatUnits(balIn, from.decimals));
     } else {
-      // Leave a 0.02 MON gas buffer
       const v = Number(formatUnits(balIn, from.decimals));
       const safe = Math.max(0, v - 0.02);
       setAmountIn(safe > 0 ? String(safe) : "");
@@ -261,12 +358,13 @@ export default function SwapWidget({
   const routeLabel = useMemo(() => {
     const proto =
       quote?.routes?.[0]?.[0]?.splits?.[0]?.protocol ?? "aggregator";
-    return `${from.symbol} → ${to.symbol} via ${proto}`;
-  }, [quote, from.symbol, to.symbol]);
+    return isViaWrap
+      ? `MON wrap → WMON → ${to.symbol} via ${proto}`
+      : `${from.symbol} → ${to.symbol} via ${proto}`;
+  }, [quote, from.symbol, to.symbol, isViaWrap]);
 
-  // Count hops in the chosen route — used to warn about multi-hop on
-  // thin-liquidity tokens (compounding slippage = high revert risk)
-  const hopCount = quote?.routes?.[0]?.length ?? 1;
+  const hopCount =
+    (quote?.routes?.[0]?.length ?? 1) + (isViaWrap ? 1 : 0); // wrap is +1 step
 
   const impact = parseFloat(
     quote?.compound_impact ??
@@ -274,7 +372,7 @@ export default function SwapWidget({
       "0"
   );
 
-  const isWorking = isSending || isApproving || waitingReceipt;
+  const isWorking = busy || quoting || waitingReceipt;
 
   return (
     <div className="rounded-3xl border border-white/10 bg-black/30 p-5 shadow-[0_12px_60px_rgba(0,0,0,0.55)] backdrop-blur">
@@ -394,13 +492,13 @@ export default function SwapWidget({
             <span className="font-mono text-white">{routeLabel}</span>
           </div>
           <div className="flex justify-between py-0.5">
-            <span>hops</span>
+            <span>steps</span>
             <span
               className={`font-mono ${
                 hopCount >= 3 ? "text-yellow-300" : "text-white"
               }`}
             >
-              {hopCount} {hopCount === 1 ? "step" : "steps"}
+              {hopCount}
               {hopCount >= 3 ? " ⚠" : ""}
             </span>
           </div>
@@ -423,20 +521,19 @@ export default function SwapWidget({
         </div>
       )}
 
-      {/* Multi-hop warning — compounding slippage is the #1 revert cause on
-          thin-liquidity tokens like MONI */}
-      {quote && hopCount >= 3 && slipBps < 1000 && (
-        <div className="mt-2 rounded-xl border border-yellow-400/40 bg-yellow-500/10 p-3 text-[11px] text-yellow-100">
-          ⚠ Multi-hop route ({hopCount} steps). Slippage compounds across hops
-          on thin-liquidity pairs — bump to <b>10%</b> for safer execution.
+      {/* Via-wrap notice — explain the 3-tx flow before the user signs */}
+      {isViaWrap && (
+        <div className="mt-2 rounded-xl border border-purple-400/30 bg-purple-500/10 p-3 text-[11px] text-purple-100">
+          ℹ Routing via WMON gets a cleaner direct pool path. This will be{" "}
+          <b>3 wallet signatures</b>: wrap, approve, swap.
         </div>
       )}
 
       {/* High impact warning */}
       {quote && impact >= 5 && (
         <div className="mt-2 rounded-xl border border-pink-400/40 bg-pink-500/10 p-3 text-[11px] text-pink-100">
-          ⚠ HIGH PRICE IMPACT ({impact.toFixed(1)}%). Try a smaller amount, or
-          accept higher slippage.
+          ⚠ HIGH PRICE IMPACT ({impact.toFixed(1)}%). MONI has thin liquidity
+          right now — try a smaller amount.
         </div>
       )}
 
@@ -464,6 +561,8 @@ export default function SwapWidget({
           ? "Routing…"
           : !quote
           ? "No route"
+          : isViaWrap
+          ? `Wrap + Swap → ${to.symbol}`
           : isFromNative
           ? `Swap ${from.symbol} → ${to.symbol}`
           : `Approve + Swap ${from.symbol} → ${to.symbol}`}
@@ -495,7 +594,7 @@ export default function SwapWidget({
       )}
 
       <p className="mt-3 text-center text-[10px] text-white/40">
-        Powered by Monorail aggregator · 1% routes to MONI flywheel
+        Powered by Monorail · 1% routes to the MONI flywheel
       </p>
 
       <TokenPicker
