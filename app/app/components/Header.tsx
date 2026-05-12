@@ -26,6 +26,18 @@ export default function Header() {
             Home
           </a>
           <a
+            href="/#roadmap"
+            className="rounded-lg px-3 py-2 text-white/75 hover:bg-white/5 hover:text-white"
+          >
+            Roadmap
+          </a>
+          <a
+            href="/#gallery"
+            className="rounded-lg px-3 py-2 text-white/75 hover:bg-white/5 hover:text-white"
+          >
+            Gallery
+          </a>
+          <a
             href="/swap"
             className="rounded-lg px-3 py-2 text-white/75 hover:bg-white/5 hover:text-white"
           >
