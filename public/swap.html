@@ -14,10 +14,55 @@
 <link rel="apple-touch-icon" href="/Moni.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Space+Grotesk:wght@400;500;700&family=Bungee&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+
 
 <style>
-/* Swap-specific styles — keep moyaki's palette + typography */
+/* MONI swap — self-contained base styles (no external stylesheet needed) */
+:root {
+  --bg: #0a0612;
+  --bg-2: #1a0d2e;
+  --ink: #f3eefe;
+  --ink-dim: #b9a8d8;
+  --purple: #a855f7;
+  --purple-deep: #6b21a8;
+  --purple-soft: #c4a3ff;
+  --magenta: #d946ef;
+  --pink: #ec4899;
+  --pink-soft: #f9a8d4;
+  --gold: #fbbf24;
+  --green: #7ce4c6;
+  --orange: #ffb36b;
+  --ember: #ff7a2a;
+  --card: rgba(255, 255, 255, 0.05);
+  --card-stroke: rgba(168, 85, 247, 0.18);
+  --radius: 18px;
+  --radius-sm: 10px;
+  --max: 1180px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Space Grotesk', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  background-image:
+    radial-gradient(1200px 600px at 80% -10%, rgba(168, 85, 247, 0.35), transparent 60%),
+    radial-gradient(900px 500px at -10% 30%, rgba(217, 70, 239, 0.20), transparent 60%),
+    radial-gradient(800px 600px at 50% 110%, rgba(196, 163, 255, 0.15), transparent 60%);
+  overflow-x: hidden;
+  line-height: 1.55;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+img { display: block; max-width: 100%; height: auto; }
+.container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+button { font-family: inherit; cursor: pointer; }
+input { font-family: inherit; }
+</style>
+<style>
+/* Swap-specific styles (rebranded for MONI) */
 .swap-wrap{max-width:560px;margin:0 auto;padding:18px 18px 60px;}
 
 .swap-topbar{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;margin-bottom:24px;border-bottom:1px solid rgba(255,255,255,.08);}
