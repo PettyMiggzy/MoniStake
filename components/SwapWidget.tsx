@@ -306,10 +306,11 @@ export default function SwapWidget({
       to: string;
       data: string;
       value?: string;
+      gas?: string;
     }): Promise<`0x${string}`> {
       return (await eth.request({
         method: "eth_sendTransaction",
-        params: [{ from: address, ...tx }],
+        params: [{ from: address, gas: "0x186A0", ...tx }], // default 100k
       })) as `0x${string}`;
     }
     async function waitMined(
@@ -353,6 +354,7 @@ export default function SwapWidget({
           to: WMON_ADDRESS,
           value: "0x" + amountWei.toString(16),
           data: "0xd0e30db0", // deposit()
+          gas: "0x13880", // 80k — deposit is ~30k, buffer for variance
         });
         const wrapOk = await waitMined(wrapHash);
         if (!wrapOk) throw new Error("Wrap reverted on-chain.");
@@ -366,15 +368,20 @@ export default function SwapWidget({
           const apprHash = await sendRaw({
             to: WMON_ADDRESS,
             data: approveCalldata(quote.transaction.to, UINT_MAX),
+            gas: "0x11170", // 70k — approve is ~50k
           });
           await waitMined(apprHash);
         }
 
         setStatus({ kind: "info", msg: "Step 3 of 3 · Sign the swap…" });
+        const swapGas = quote.gas_estimate
+          ? "0x" + Math.floor(quote.gas_estimate * 1.3).toString(16)
+          : "0x186A00"; // 1.6M fallback
         const swapHash = await sendRaw({
           to: quote.transaction.to,
           data: quote.transaction.data,
           value: "0x0",
+          gas: swapGas,
         });
         setLastTxHash(swapHash);
         setStatus({
