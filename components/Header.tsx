@@ -8,6 +8,7 @@ const NAV = [
   { label: "About", href: "/#about" },
   { label: "Roadmap", href: "/#roadmap" },
   { label: "Gallery", href: "/#gallery" },
+  { label: "Submit", href: "/#submit", highlight: true },
   { label: "Swap", href: "/swap" },
   { label: "Monad", href: "https://www.monad.xyz", external: true },
 ];
@@ -58,10 +59,16 @@ export default function Header() {
                 href={n.href}
                 target={n.external ? "_blank" : undefined}
                 rel={n.external ? "noopener" : undefined}
-                className="relative rounded-lg px-3 py-2 text-white/75 hover:text-white transition group"
+                className={
+                  n.highlight
+                    ? "rounded-lg border border-purple-400/40 bg-purple-500/20 px-3 py-2 text-white shadow-[0_0_12px_rgba(168,85,247,0.3)] hover:bg-purple-500/30"
+                    : "relative rounded-lg px-3 py-2 text-white/75 hover:text-white transition group"
+                }
               >
                 {n.label}
-                <span className="pointer-events-none absolute inset-x-3 -bottom-px h-px scale-x-0 bg-gradient-to-r from-transparent via-purple-300 to-transparent transition-transform group-hover:scale-x-100" />
+                {!n.highlight ? (
+                  <span className="pointer-events-none absolute inset-x-3 -bottom-px h-px scale-x-0 bg-gradient-to-r from-transparent via-purple-300 to-transparent transition-transform group-hover:scale-x-100" />
+                ) : null}
               </a>
             ))}
           </nav>

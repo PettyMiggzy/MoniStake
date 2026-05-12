@@ -40,19 +40,42 @@ export type Submission = {
   is_seed?: boolean;
 };
 
-// Hard-coded seed — these are the original community pieces from the
-// monitheyeti.com gallery, rescued during the CTO transition. They
-// always appear in the gallery alongside any Supabase submissions.
+// Hard-coded seed — these are community pieces from monitheyeti.com
+// and the BeBe The Great Telegram, rescued + curated during the CTO
+// transition. They always appear in the gallery alongside any new
+// Supabase submissions.
 export const SEED_SUBMISSIONS: Submission[] = [
   {
-    id: "seed-01",
-    title: "First crea",
-    username: "Moni",
-    image_url: "/gallery/01-first-crea.jpg",
+    id: "seed-04",
+    title: "The Monitain",
+    username: "BeBeTheGreat",
+    image_url: "/gallery/04-the-monitain.jpg",
     status: "approved",
-    votes: 21,
-    views: 593,
-    created_at: "2025-12-28T00:00:00Z",
+    votes: 47,
+    views: 921,
+    created_at: "2026-05-10T00:00:00Z",
+    is_seed: true,
+  },
+  {
+    id: "seed-06",
+    title: "Emperor MONI",
+    username: "BeBeTheGreat",
+    image_url: "/gallery/06-emperor-moni.jpg",
+    status: "approved",
+    votes: 38,
+    views: 712,
+    created_at: "2026-05-09T00:00:00Z",
+    is_seed: true,
+  },
+  {
+    id: "seed-05",
+    title: "Diamond Time",
+    username: "BeBeTheGreat",
+    image_url: "/gallery/05-diamond-time.jpg",
+    status: "approved",
+    votes: 33,
+    views: 624,
+    created_at: "2026-05-08T00:00:00Z",
     is_seed: true,
   },
   {
@@ -63,6 +86,17 @@ export const SEED_SUBMISSIONS: Submission[] = [
     status: "approved",
     votes: 21,
     views: 588,
+    created_at: "2025-12-28T00:00:00Z",
+    is_seed: true,
+  },
+  {
+    id: "seed-01",
+    title: "First crea",
+    username: "Moni",
+    image_url: "/gallery/01-first-crea.jpg",
+    status: "approved",
+    votes: 21,
+    views: 593,
     created_at: "2025-12-28T00:00:00Z",
     is_seed: true,
   },

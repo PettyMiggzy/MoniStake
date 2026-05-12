@@ -260,6 +260,19 @@ export default function Gallery() {
     listApprovedSubmissions().then(setItems);
   }, []);
 
+  // Auto-open Submit modal when URL has #submit (deep-link target)
+  useEffect(() => {
+    function checkHash() {
+      if (typeof window === "undefined") return;
+      if (window.location.hash === "#submit") {
+        setSubmitOpen(true);
+      }
+    }
+    checkHash();
+    window.addEventListener("hashchange", checkHash);
+    return () => window.removeEventListener("hashchange", checkHash);
+  }, []);
+
   async function handleVote(id: string) {
     if (myVotes[id]) return;
     // Optimistic
@@ -288,23 +301,31 @@ export default function Gallery() {
   const supabaseReady = getSupabase() !== null;
 
   return (
-    <section id="gallery" className="mb-10">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <section id="gallery" className="mb-12 md:mb-16">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            <span className="text-purple-300">06 ·</span> The Gallery
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-purple-300">
+            Community art · {items.length} pieces
+          </div>
+          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+            The Gallery
           </h2>
-          <p className="mt-1 text-xs text-white/55">
-            Community-submitted MONI art. Bow to the Yeti.
+          <p className="mt-2 max-w-xl text-sm text-white/60">
+            Every piece here was made by someone in the MONI community. Drop
+            yours and join them — top voted gets paid back in $MONI.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setSubmitOpen(true)}
-          className="rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-500 px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white shadow-[0_8px_24px_rgba(168,85,247,0.3)] hover:brightness-110"
+        <a
+          id="submit"
+          href="#submit"
+          onClick={(e) => {
+            e.preventDefault();
+            setSubmitOpen(true);
+          }}
+          className="rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-500 px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] text-white shadow-[0_10px_30px_rgba(168,85,247,0.4)] hover:brightness-110"
         >
           📤 Submit a Creation
-        </button>
+        </a>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -318,6 +339,31 @@ export default function Gallery() {
         ))}
       </div>
 
+      {/* Bottom CTA — second chance to submit after scrolling through */}
+      <div className="mt-6 flex flex-col items-center gap-3 rounded-3xl border border-purple-400/25 bg-gradient-to-br from-purple-500/10 to-fuchsia-500/5 p-6 text-center">
+        <div className="text-xs uppercase tracking-[0.25em] text-purple-200/85">
+          Your turn
+        </div>
+        <h3 className="text-2xl font-extrabold tracking-tight text-white">
+          Drew a Yeti? Painted a Yeti?
+          <br />
+          AI-generated a Yeti at 3am?
+        </h3>
+        <p className="max-w-md text-sm text-white/65">
+          Drop it in the gallery. Get votes. Best piece each week earns $MONI.
+        </p>
+        <button
+          type="button"
+          onClick={() => setSubmitOpen(true)}
+          className="mt-2 rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-500 px-8 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-white shadow-[0_10px_30px_rgba(168,85,247,0.4)] hover:brightness-110"
+        >
+          📤 Submit a Creation
+        </button>
+        <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-white/40">
+          PNG · JPG · GIF · WebP · max 20 MB
+        </div>
+      </div>
+
       {!supabaseReady ? (
         <div className="mt-4 rounded-xl border border-yellow-400/30 bg-yellow-500/5 p-3 text-[11px] text-yellow-200/80">
           🛠 New submissions need Supabase configured. Run{" "}
@@ -326,7 +372,7 @@ export default function Gallery() {
           <code className="rounded bg-black/40 px-1 py-0.5 font-mono">NEXT_PUBLIC_SUPABASE_URL</code>
           {" + "}
           <code className="rounded bg-black/40 px-1 py-0.5 font-mono">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>{" "}
-          to your Vercel env vars. The seed gallery above works without it.
+          to Vercel env. The seed gallery above works without it.
         </div>
       ) : null}
 

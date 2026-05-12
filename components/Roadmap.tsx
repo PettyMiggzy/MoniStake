@@ -4,6 +4,7 @@ type Phase = {
   num: string;
   title: string;
   date: string;
+  tagline: string;
   items: string[];
   goal?: string;
   status: "done" | "live" | "next" | "later";
@@ -11,76 +12,81 @@ type Phase = {
 
 const PHASES: Phase[] = [
   {
-    num: "01",
-    title: "Launch & Foundations",
+    num: "00",
+    title: "The Original Climb",
     date: "Q4 2025",
+    tagline: "Where it started",
     status: "done",
     items: [
-      "Fair launch of $MONI on Nad.fun",
-      "Total supply: 1,000,000,000 $MONI",
-      "Website live with real-time buying guide",
-      "Active Telegram community",
-      "Supply lock after the bonding curve completes",
-      "Regular burns to progressively reduce circulating supply",
+      "Fair launch on nad.fun · 1B supply",
+      "Bonding curve graduated · LP locked",
+      "First 6 community art pieces submitted",
+      "563 holders · original mountain summit reached",
+      "Then the dev went quiet",
     ],
-    goal: "1,000 holders + strong organic buzz",
+    goal: "The trail was marked. Now it gets continued.",
+  },
+  {
+    num: "01",
+    title: "Community Takeover",
+    date: "May 2026 · LIVE NOW",
+    tagline: "The Yeti picks himself up",
+    status: "live",
+    items: [
+      "Site rebuilt from scratch — no WordPress, no dev keys",
+      "16 original art pieces secured + hosted in this gallery",
+      "Universal swap aggregator on monad — every trade routes 1% to the MONI treasury",
+      "Monorail App ID 1176408161625 — flywheel is live",
+      "BeBe The Great TG group: active artist + degen base",
+      "Wallets handed to community stewardship · public addresses",
+    ],
+    goal: "Re-anchor the brand. Stop the bleed. Make swapping MONI fund MONI.",
   },
   {
     num: "02",
-    title: "CTO Transition — Community Growth",
-    date: "Q1–Q2 2026 · LIVE",
-    status: "live",
+    title: "The Monitain",
+    date: "Summer 2026 · NEXT",
+    tagline: "Build the home base",
+    status: "next",
     items: [
-      "Community pickup after the dev went quiet",
-      "Site rebuilt from scratch — chogi.xyz infra, no WP, faster",
-      "All 16 community art pieces secured + re-hosted",
-      "Universal swap on this domain — every trade funds the flywheel",
-      "1% Monorail App ID fee → MONI buyback wallet",
-      "Telegram + X handed to community stewardship",
+      "Monitain landing zone — single MONI brand HQ at moni.xyz",
+      "Yeti Squad NFT collection — minted FROM the community gallery (the artists become the collection)",
+      "Diamond Yeti / Emperor MONI tier system — holder tiers unlock perks (priority gallery placement, raid roles, OG list for next mint)",
+      "DexScreener + Dextools paid listings",
+      "Weekly art bounties — 100K MONI for top community piece each week",
+      "Twitter Spaces with Monad ecosystem founders",
     ],
-    goal: "Restore momentum · listings on DexScreener + Dextools",
+    goal: "5,000 holders · MONI is THE Monad meme nobody can ignore",
   },
   {
     num: "03",
-    title: "Utilities & Expansion",
+    title: "The Pantheon",
     date: "Q3 2026",
+    tagline: "Take a seat at the table",
     status: "next",
     items: [
-      "Yeti Squad NFT drop — wear the chain, get the perks",
-      '"Submit a Drip" gallery reopens — community art continues',
-      "Periodic Buy Contests + meme contests with on-chain payout",
-      "Merch (hoodies, stickers)",
-      "Influencer onboarding + AMAs",
-      "Possible play-to-earn Yeti mini-game",
+      "Cross-Monanimal collabs — joint art drops with MOYAKI, CHOG, MONSHI, RENE",
+      "MONI gets a tile on the canonical House of Monad family page",
+      "Merch line: Pit Viper sunglasses (real ones, branded MONI), gold chains, hoodies",
+      "Real-world Monitain meetup — pick a snowy location, gather the community",
+      "Influencer onboarding (the ones who actually trade Monad)",
     ],
-    goal: "$10M market cap + strong strategic partnerships",
+    goal: "MONI is recognized as Monad culture — not just a coin",
   },
   {
     num: "04",
-    title: "Domination & Sustainability",
-    date: "Q4 2026+",
+    title: "The Throne",
+    date: "Late 2026 / early 2027",
+    tagline: "Lock the future in",
     status: "later",
     items: [
-      "Major listings on top-tier CEXs",
-      "DAO governance — holders vote on treasury moves",
-      "DeFi integrations + AR / metaverse Yeti experiences",
-      "Charity initiatives (nature & snow wildlife protection)",
-      "Massive global marketing campaigns",
+      "DAO governance — Yeti Squad NFT holders vote treasury direction",
+      "DeFi integrations beyond the swap — LP rewards, lending markets if liquidity supports it",
+      "Strategic CEX listings (only if volume earns them — no paid pumps)",
+      "Recurring burns funded by accumulated swap fees",
+      "Charity initiative: real-world snow wildlife protection (tying back to the Yeti origin)",
     ],
-    goal: "10,000+ holders · Top 1,000 on CMC · fully autonomous community",
-  },
-  {
-    num: "05",
-    title: "The Family Portrait",
-    date: "Ongoing CTO addition",
-    status: "later",
-    items: [
-      "MONI on the canonical House of Monad page — full pantheon",
-      "Cross-Monanimal collabs — Yeti + Moyaki + Chog feature art",
-      "Shared swap, shared chart, shared trust across the ecosystem",
-      "Yeti claims his lane in the family: the drip",
-    ],
-    goal: "MONI the elder · part of the Monad cultural fabric",
+    goal: "Self-sustaining flywheel · MONI funds MONI forever",
   },
 ];
 
@@ -93,7 +99,7 @@ function badge(status: Phase["status"]) {
     );
   if (status === "live")
     return (
-      <span className="rounded-md bg-purple-500/30 px-2 py-0.5 text-[10px] font-bold tracking-widest text-purple-100 ring-1 ring-purple-400/50 ring-offset-1 ring-offset-[#07050d]">
+      <span className="rounded-md bg-purple-500/40 px-2 py-0.5 text-[10px] font-bold tracking-widest text-white ring-1 ring-purple-300/60">
         LIVE
       </span>
     );
@@ -112,57 +118,73 @@ function badge(status: Phase["status"]) {
 
 export default function Roadmap() {
   return (
-    <section id="roadmap" className="mb-10">
-      <div className="mb-4">
-        <h2 className="text-2xl font-bold tracking-tight">
-          <span className="text-purple-300">05 ·</span> Roadmap
-        </h2>
-        <p className="mt-1 text-xs text-white/55">
-          Picking up exactly where the original team stopped. Phases 1, 2 done /
-          live · 3, 4, 5 ahead.
-        </p>
+    <section id="roadmap" className="mb-12 md:mb-16">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-purple-300">
+            The Path Up
+          </div>
+          <h2 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+            Roadmap
+          </h2>
+          <p className="mt-2 max-w-xl text-sm text-white/60">
+            Where the original team stopped and where the community is going.
+            This is what the CTO is committing to, not a wish list.
+          </p>
+        </div>
       </div>
 
-      <ol className="relative space-y-3">
+      <ol className="relative space-y-4">
         {/* Timeline rail */}
         <div
           aria-hidden
-          className="absolute left-[14px] top-2 bottom-2 w-px bg-gradient-to-b from-green-400/40 via-purple-400/30 to-white/10"
+          className="absolute left-[19px] top-3 bottom-3 w-px bg-gradient-to-b from-green-400/40 via-purple-400/30 to-white/5"
         />
 
         {PHASES.map((p) => (
-          <li key={p.num} className="relative pl-10">
+          <li key={p.num} className="relative pl-12">
             <div
-              className={`absolute left-0 top-2 flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-bold ${
+              className={`absolute left-0 top-3 flex h-10 w-10 items-center justify-center rounded-full border-2 text-[11px] font-extrabold ${
                 p.status === "done"
-                  ? "border-green-400/60 bg-green-500/20 text-green-300"
+                  ? "border-green-400/70 bg-green-500/20 text-green-300"
                   : p.status === "live"
-                  ? "border-purple-300 bg-purple-500/40 text-white shadow-[0_0_16px_rgba(168,85,247,0.5)]"
+                  ? "border-purple-300 bg-purple-500/40 text-white shadow-[0_0_24px_rgba(168,85,247,0.6)]"
                   : "border-white/15 bg-white/5 text-white/60"
               }`}
             >
               {p.num}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-bold text-white">{p.title}</h3>
+            <div
+              className={`rounded-2xl border bg-black/30 p-5 transition ${
+                p.status === "live"
+                  ? "border-purple-400/40 shadow-[0_0_40px_rgba(168,85,247,0.15)]"
+                  : "border-white/10 hover:border-white/20"
+              }`}
+            >
+              <div className="mb-1 flex flex-wrap items-center gap-2">
                 {badge(p.status)}
-                <span className="ml-auto text-[10px] font-semibold uppercase tracking-widest text-purple-200/60">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-purple-200/60">
                   {p.date}
                 </span>
               </div>
-              <ul className="space-y-1.5 text-sm text-white/75">
+              <h3 className="text-xl font-extrabold tracking-tight text-white">
+                {p.title}
+              </h3>
+              <div className="mt-0.5 text-xs italic text-white/55">{p.tagline}</div>
+
+              <ul className="mt-4 space-y-2 text-sm text-white/80">
                 {p.items.map((item, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="mt-0.5 text-purple-300">→</span>
+                  <li key={i} className="flex gap-2.5">
+                    <span className="mt-1 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-purple-400" />
                     <span>{item}</span>
                   </li>
                 ))}
               </ul>
               {p.goal ? (
-                <div className="mt-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-yellow-200/85">
-                  🎯 {p.goal}
+                <div className="mt-4 rounded-lg border-l-2 border-purple-400/60 bg-purple-500/5 px-3 py-2 text-[11px] font-medium text-purple-100/85">
+                  <span className="font-bold text-purple-300">→ Outcome:</span>{" "}
+                  {p.goal}
                 </div>
               ) : null}
             </div>
@@ -170,12 +192,13 @@ export default function Roadmap() {
         ))}
       </ol>
 
-      <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-center text-[11px] italic text-white/55">
-        Original team gave us the trail. We continue the climb.
-        <br />
-        <span className="text-white/75">
+      <div className="mt-6 rounded-2xl border border-purple-400/20 bg-gradient-to-br from-purple-500/5 to-fuchsia-500/5 p-5 text-center">
+        <div className="text-xs italic text-white/65">
           "No empty promises. No false summits."
-        </span>
+        </div>
+        <div className="mt-1 text-[10px] uppercase tracking-[0.18em] text-purple-200/60">
+          Carried over from the original team. Held by the CTO.
+        </div>
       </div>
     </section>
   );
