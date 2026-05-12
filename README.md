@@ -1,28 +1,30 @@
-# MoniStake · CTO Edition
+# MONI · The Yeti of Monad
 
-Pool-based staking dapp for **$MONI** on Monad mainnet. Lock 30 / 90 / 180 / 365 days; early unstake routes a slice to the rewards pool and a slice to the buyback wallet. No fake APR — rewards come from donations + early-unstake fee flow.
+CTO-run site for **$MONI** on Monad mainnet — purple yeti, Pit Vipers, gold chains. Homepage + universal swap aggregator. No staking (the original contract is unaudited; deleted from this build).
 
-> *"Lock the Yeti. Earn the Yeti."*
+> *"Purple. Pit Vipers. Paint. Pump."*
 > *MONI the Yeti — the purple spirit of the Monad community.*
 > *The dev left. The Yeti stayed.*
 
-## What's on-chain (verified May 2026)
+## What this app is
+
+- **`/`** — landing page with live stats (price · 24h · holders · liquidity from Monorail + DexScreener), DexScreener chart embed, lore, and a big Buy $MONI CTA
+- **`/swap`** — universal Monad swap aggregator (any token ↔ any token). Defaults to MON → MONI. Routed through Monorail's pathfinder v4 with App ID `1176408161625` so 1% of every swap flows to the MONI flywheel treasury
+
+## On-chain references
 
 | | |
 |---|---|
-| **Token** | `0x0CC9B2e2AcD7BACfF79eb7dB48F5662B622E7777` ($MONI · 1B supply) |
-| **Staking contract** | `0xAC6Ea4CcE87E3d0bD057E5a761feE97053fBe702` |
-| **Buyback wallet** | `0xa9022262eE7bD0085d6be2d62C9C485b976cF314` |
-| Normal unstake fee | 2.00% → rewards pool |
-| Early unstake fee | 5% → rewards pool + 10% → buyback wallet |
-| Lock periods | 30 / 90 / 180 / 365 days |
+| **MONI token** | `0x0CC9B2e2AcD7BACfF79eb7dB48F5662B622E7777` (1B supply) |
+| **DexScreener pair** | `0x0198833561e4B64aFA593cC3E90f446933ac2a9a` (nad-fun) |
 
 ## Tech stack
 
-- Next.js 16 (App Router)
+- Next.js 16 (App Router) + Turbopack
 - wagmi 2 + viem 2 + RainbowKit 2
-- Tailwind CSS
-- TypeScript
+- Tailwind CSS + TypeScript
+- Monorail aggregator API (free, CORS-open)
+- DexScreener API (free, CORS-open)
 
 ## Local dev
 
@@ -38,72 +40,66 @@ Open `http://localhost:3000`.
 
 ## Deploy
 
-### Option A · Netlify
+### Vercel (recommended)
 
-The repo already has `netlify.toml` + `@netlify/plugin-nextjs`. Steps:
+1. New project → import `PettyMiggzy/MoniStake`
+2. **Root directory:** `app/app`
+3. Framework preset auto-detects Next.js
+4. Add env vars under Settings → Environment Variables
+5. Deploy
+
+### Netlify
+
+`netlify.toml` is already in the repo. Set up:
 
 1. New site → import from `PettyMiggzy/MoniStake`
 2. **Base directory:** `app/app`
 3. **Build command:** `npm run build`
 4. **Publish directory:** `.next`
-5. Add the 4 env vars (below) under Site settings → Environment variables
+5. Add env vars under Site settings → Environment variables
 6. Deploy
-
-### Option B · Vercel
-
-1. New project → import `PettyMiggzy/MoniStake`
-2. **Root directory:** `app/app`
-3. Framework preset auto-detects Next.js
-4. Add the 4 env vars under Settings → Environment Variables
-5. Deploy
 
 ### Required environment variables
 
 ```
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=cc1358b5e311a1f844c1d6482633c78d
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=89d7a1882c0fa9a5bbe0a58accafc100
 NEXT_PUBLIC_MONI_TOKEN=0x0CC9B2e2AcD7BACfF79eb7dB48F5662B622E7777
-NEXT_PUBLIC_STAKING_CONTRACT=0xAC6Ea4CcE87E3d0bD057E5a761feE97053fBe702
-NEXT_PUBLIC_BUYBACK_WALLET=0xa9022262eE7bD0085d6be2d62C9C485b976cF314
 ```
 
-Optional overrides:
+Optional (recommended for production):
 
 ```
+NEXT_PUBLIC_SITE_URL=https://your-domain.xyz
 NEXT_PUBLIC_RPC_URL=https://rpc.monad.xyz
 NEXT_PUBLIC_EXPLORER_URL=https://monadscan.com
 NEXT_PUBLIC_CHAIN_ID=143
 ```
 
-> All NEXT_PUBLIC_* values are exposed to the browser at build time — they're configuration, not secrets.
+> `NEXT_PUBLIC_SITE_URL` resolves OG/Twitter image URLs to absolute paths so social previews work. Defaults to `https://monistake.netlify.app` if unset.
+>
+> All `NEXT_PUBLIC_*` values are exposed to the browser — they're configuration, not secrets.
 
-## After deploy
+## Fee routing
 
-The reward pool starts empty. Stakers won't earn anything until somebody calls `addRewards(amount)` on the staking contract — the UI has a "Donate to Reward Pool" input that anyone can use.
+Every swap quote passes `source=1176408161625` (the registered Monorail App ID). Monorail's pathfinder reserves 1% of the input amount and routes it to the configured treasury wallet:
 
-To bootstrap: send a chunk of MONI from the buyback wallet (or any wallet holding MONI) via `addRewards()`. The contract distributes it pro-rata to current stakers based on stake size + lock-period weight (longer locks get a higher share — see contract for exact formula).
+```
+0x4601a7f665ca13c40d2236b8b9ff1e4b87226351
+```
 
-## Contract API (read-only)
-
-| Method | Returns | Use |
-|---|---|---|
-| `totalStaked()` | uint256 | Global MONI locked |
-| `rewardsInPool()` | uint256 | Unclaimed rewards |
-| `stakerCount()` | uint256 | Distinct stakers |
-| `pendingRewards(user)` | uint256 | Pending for an address |
-| `userInfo(user)` | `(amount, rewardDebt, unlockTime, lockDays, exists)` | Full position |
-| `normalUnstakeFeeBps()` / `earlyPenaltyToPoolBps()` / `earlyPenaltyToBuybackBps()` | uint16 | Fee schedule (bps) |
-| `buybackWallet()` | address | Buyback recipient |
-
-## Contract API (writes)
-
-| Method | Purpose |
-|---|---|
-| `stake(amount, lockDays)` | Lock MONI for 30/90/180/365 days |
-| `unstake(amount)` | Withdraw (with fee if early) |
-| `claim()` | Pull pending rewards |
-| `syncRewards()` | Manually trigger reward accounting refresh |
-| `addRewards(amount)` | Anyone can donate MONI to the pool |
+A buyback bot processes that wallet on a 10-minute cadence — converts non-CHOGI fees to MON revenue, burns CHOGI to dead.
 
 ## Brand assets
 
-`app/app/public/Moni.png` — official 1024×1024 PNG logo of MONI the Yeti (rescued from nad.fun's storage during the CTO transition).
+- `app/app/public/Moni.png` — 1024×1024 canonical mascot (purple yeti in Pit Vipers + MONI chain)
+- Original art rescued from `monitheyeti.com` during CTO transition (16 community pieces total — kept offline for now)
+
+## Lore
+
+The Yeti came down from a neighboring mountain to climb Monad. Drawn by performance. He brought the chains, brought the brush, brought the bit. The community grew around "send it." Six early artists made him their canvas. Then the dev went quiet.
+
+**The mountain stayed. The Yeti stayed. The chains definitely stayed.**
+
+The CTO continues from there.
+
+> "No empty promises. No false summits." — original team, preserved.

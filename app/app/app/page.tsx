@@ -1,379 +1,290 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { useAccount, useReadContracts, useWriteContract } from "wagmi";
-import { formatUnits, parseUnits, maxUint256 } from "viem";
-import { useMemo, useState } from "react";
-import { erc20Abi, stakingAbi } from "@/lib/abi";
 
-const MONI = process.env.NEXT_PUBLIC_MONI_TOKEN as `0x${string}`;
-const STAKING = process.env.NEXT_PUBLIC_STAKING_CONTRACT as `0x${string}`;
-const BUYBACK = process.env.NEXT_PUBLIC_BUYBACK_WALLET as `0x${string}`;
+const MONI_ADDR = "0x0cc9b2e2acd7bacff79eb7db48f5662b622e7777";
+const DEXSCREENER_PAIR = "0x0198833561e4b64afa593cc3e90f446933ac2a9a";
 
-const cn = (...s: (string | false | undefined)[]) => s.filter(Boolean).join(" ");
-const short = (a?: string) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : "—");
-const fmt = (v: bigint, d: number) =>
-  Number(formatUnits(v ?? 0n, d)).toLocaleString(undefined, { maximumFractionDigits: 6 });
+type Stats = {
+  priceUsd?: number;
+  h24?: number;
+  holders?: number;
+  liquidity?: number;
+};
 
-function Card({ children }: { children: React.ReactNode }) {
+function fmtUsd(n: number | undefined): string {
+  if (n == null || isNaN(n)) return "—";
+  if (n === 0) return "$0";
+  if (n < 0.000001) return "$" + n.toExponential(2);
+  if (n < 0.01) return "$" + n.toFixed(6);
+  if (n < 1) return "$" + n.toFixed(4);
+  if (n < 1000) return "$" + n.toFixed(2);
+  if (n < 1e6) return "$" + (n / 1000).toFixed(1) + "k";
+  if (n < 1e9) return "$" + (n / 1e6).toFixed(2) + "M";
+  return "$" + (n / 1e9).toFixed(2) + "B";
+}
+
+function fmtInt(n: number | undefined): string {
+  if (n == null || isNaN(n)) return "—";
+  return n.toLocaleString("en-US");
+}
+
+function fmtPct(n: number | undefined): string {
+  if (n == null || isNaN(n)) return "—";
+  return (n >= 0 ? "+" : "") + n.toFixed(2) + "%";
+}
+
+function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div className="rounded-3xl border border-white/10 bg-black/30 p-5 shadow-[0_12px_60px_rgba(0,0,0,0.55)] backdrop-blur">
-      {children}
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3">
+      <div className="text-[10px] uppercase tracking-widest text-white/55">{label}</div>
+      <div className={`mt-1 text-lg font-bold ${color ?? "text-white"}`}>{value}</div>
     </div>
   );
 }
 
-function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-      <div className="text-[11px] uppercase tracking-wide text-white/60">{label}</div>
-      <div className="mt-1 text-xl font-semibold text-white">{value}</div>
-      {sub ? <div className="mt-1 text-xs text-white/50">{sub}</div> : null}
-    </div>
-  );
-}
+export default function Home() {
+  const [stats, setStats] = useState<Stats>({});
 
-export default function Page() {
-  const { address, isConnected } = useAccount();
-  const { writeContract, isPending } = useWriteContract();
+  useEffect(() => {
+    let cancel = false;
 
-  const [stakeAmt, setStakeAmt] = useState("");
-  const [unstakeAmt, setUnstakeAmt] = useState("");
-  const [donateAmt, setDonateAmt] = useState("");
-  const [lockDays, setLockDays] = useState<30 | 90 | 180 | 365>(30);
+    async function refresh() {
+      // Monorail: price + holders
+      fetch(`https://api.monorail.xyz/v2/token/${MONI_ADDR}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          if (cancel || !j) return;
+          setStats((s) => ({
+            ...s,
+            priceUsd: j.usd_per_token ? Number(j.usd_per_token) : s.priceUsd,
+            holders: typeof j.holders === "number" ? j.holders : s.holders,
+          }));
+        })
+        .catch(() => {});
 
-  const contracts = useMemo(() => {
-    if (!address) return [];
-    return [
-      { address: MONI, abi: erc20Abi, functionName: "decimals" as const },
-      { address: MONI, abi: erc20Abi, functionName: "symbol" as const },
-      { address: MONI, abi: erc20Abi, functionName: "balanceOf" as const, args: [address] as const },
-      { address: MONI, abi: erc20Abi, functionName: "allowance" as const, args: [address, STAKING] as const },
-
-      { address: STAKING, abi: stakingAbi, functionName: "totalStaked" as const },
-      { address: STAKING, abi: stakingAbi, functionName: "rewardsInPool" as const },
-      { address: STAKING, abi: stakingAbi, functionName: "stakerCount" as const },
-
-      { address: STAKING, abi: stakingAbi, functionName: "normalUnstakeFeeBps" as const },
-      { address: STAKING, abi: stakingAbi, functionName: "earlyPenaltyToPoolBps" as const },
-      { address: STAKING, abi: stakingAbi, functionName: "earlyPenaltyToBuybackBps" as const },
-      { address: STAKING, abi: stakingAbi, functionName: "buybackWallet" as const },
-
-      { address: STAKING, abi: stakingAbi, functionName: "pendingRewards" as const, args: [address] as const },
-      { address: STAKING, abi: stakingAbi, functionName: "userInfo" as const, args: [address] as const },
-    ];
-  }, [address]);
-
-  const { data, refetch } = useReadContracts({
-    allowFailure: false,
-    contracts: contracts as any,
-    query: { enabled: !!address },
-  });
-
-  const decimals = (data?.[0] as unknown as number) ?? 18;
-  const symbol = (data?.[1] as unknown as string) ?? "MONI";
-  const walletBal = (data?.[2] as unknown as bigint) ?? 0n;
-  const allowance = (data?.[3] as unknown as bigint) ?? 0n;
-
-  const totalStaked = (data?.[4] as unknown as bigint) ?? 0n;
-  const rewardsPool = (data?.[5] as unknown as bigint) ?? 0n;
-  const stakerCount = (data?.[6] as unknown as bigint) ?? 0n;
-
-  const normalFeeBps = (data?.[7] as unknown as number) ?? 200;
-  const earlyPoolBps = (data?.[8] as unknown as number) ?? 500;
-  const earlyBuyBps = (data?.[9] as unknown as number) ?? 1000;
-
-  const buybackWallet = ((data?.[10] as unknown as `0x${string}`) ?? BUYBACK) as `0x${string}`;
-
-  const pending = (data?.[11] as unknown as bigint) ?? 0n;
-  const user = (data?.[12] as unknown as {
-    amount: bigint;
-    rewardDebt: bigint;
-    unlockTime: bigint;
-    lockDays: number;
-    exists: boolean;
-  }) ?? { amount: 0n, rewardDebt: 0n, unlockTime: 0n, lockDays: 0, exists: false };
-
-  const yourStaked = user.amount ?? 0n;
-  const unlockTimeMs = Number(user.unlockTime ?? 0n) * 1000;
-  const isEarly = yourStaked > 0n && Date.now() < unlockTimeMs;
-
-  const stakeBn = useMemo(() => {
-    try {
-      return parseUnits(stakeAmt || "0", decimals);
-    } catch {
-      return 0n;
+      // DexScreener: 24h change + liquidity (Monorail doesn't surface these)
+      fetch(
+        `https://api.dexscreener.com/latest/dex/tokens/${MONI_ADDR}`,
+        { cache: "no-store" }
+      )
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          if (cancel || !j?.pairs?.length) return;
+          const pair = [...j.pairs].sort(
+            (a: any, b: any) =>
+              (parseFloat(b?.liquidity?.usd) || 0) -
+              (parseFloat(a?.liquidity?.usd) || 0)
+          )[0];
+          const h24 = parseFloat(pair?.priceChange?.h24);
+          const liq = parseFloat(pair?.liquidity?.usd);
+          setStats((s) => ({
+            ...s,
+            h24: isNaN(h24) ? s.h24 : h24,
+            liquidity: isNaN(liq) ? s.liquidity : liq,
+          }));
+        })
+        .catch(() => {});
     }
-  }, [stakeAmt, decimals]);
 
-  const unstakeBn = useMemo(() => {
-    try {
-      return parseUnits(unstakeAmt || "0", decimals);
-    } catch {
-      return 0n;
-    }
-  }, [unstakeAmt, decimals]);
-
-  const donateBn = useMemo(() => {
-    try {
-      return parseUnits(donateAmt || "0", decimals);
-    } catch {
-      return 0n;
-    }
-  }, [donateAmt, decimals]);
-
-  const needsApprove = allowance < stakeBn && stakeBn > 0n;
-
-  const inputClass =
-    "w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-purple-500/40";
-
-  const btnPrimary =
-    "w-full rounded-xl bg-gradient-to-r from-purple-600 to-fuchsia-500 px-4 py-2 font-semibold text-white shadow-[0_10px_30px_rgba(168,85,247,0.22)] hover:brightness-110 disabled:opacity-50";
-
-  const btnSecondary =
-    "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-white/90 hover:bg-white/10 disabled:opacity-50";
+    refresh();
+    const t = setInterval(refresh, 30000);
+    return () => {
+      cancel = true;
+      clearInterval(t);
+    };
+  }, []);
 
   return (
     <main className="min-h-screen bg-[#07050d] text-white">
-      {/* background glow */}
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.22),transparent_55%),radial-gradient(circle_at_bottom,rgba(0,0,0,0.95),transparent_60%)]" />
 
       <Header />
 
-      <div className="mx-auto max-w-6xl px-5 py-6">
+      <div className="mx-auto max-w-5xl px-5 py-10">
         {/* CTO BANNER */}
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-purple-400/30 bg-gradient-to-r from-purple-500/15 to-fuchsia-500/15 px-4 py-2.5 text-xs">
-          <span className="rounded-md bg-purple-500/30 px-2 py-0.5 font-bold tracking-wider text-purple-100">CTO</span>
-          <span className="text-white/80">community-run · dev left · the Yeti stayed</span>
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-2xl border border-purple-400/30 bg-gradient-to-r from-purple-500/15 to-fuchsia-500/15 px-4 py-2.5 text-xs">
+          <span className="rounded-md bg-purple-500/30 px-2 py-0.5 font-bold tracking-wider text-purple-100">
+            CTO
+          </span>
+          <span className="text-white/80">
+            community-run · dev left · the Yeti stayed
+          </span>
+        </div>
+
+        {/* HERO */}
+        <section className="mb-10 flex flex-col items-center gap-6 text-center md:flex-row md:items-center md:text-left">
+          <img
+            src="/Moni.png"
+            alt="MONI the Yeti"
+            className="h-40 w-40 rounded-3xl object-cover ring-4 ring-purple-400/30 shadow-[0_0_60px_rgba(168,85,247,0.5)] md:h-48 md:w-48"
+          />
+          <div className="flex-1">
+            <h1 className="text-5xl font-extrabold tracking-tight md:text-6xl">
+              <span className="bg-gradient-to-r from-purple-300 via-fuchsia-300 to-yellow-200 bg-clip-text text-transparent">
+                MONI
+              </span>{" "}
+              <span className="text-white">the Yeti</span>
+            </h1>
+            <div className="mt-2 text-sm uppercase tracking-[0.25em] text-purple-200/80">
+              Purple. Pit Vipers. Paint. Pump.
+            </div>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-white/75">
+              The purple spirit of the Monad community. Born on a neighboring
+              mountain, climbing this one — chain on his neck, brush in his
+              hand. The dev left. The Yeti stayed.
+            </p>
+
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <a
+                href="/swap"
+                className="rounded-2xl bg-gradient-to-r from-purple-600 to-fuchsia-500 px-7 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-[0_10px_30px_rgba(168,85,247,0.35)] hover:brightness-110"
+              >
+                Buy $MONI →
+              </a>
+              <a
+                href={`https://dexscreener.com/monad/${DEXSCREENER_PAIR}`}
+                target="_blank"
+                rel="noopener"
+                className="rounded-2xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold uppercase tracking-wider text-white/85 hover:bg-white/10"
+              >
+                Chart ↗
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* STATS STRIP */}
+        <section className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat label="Price" value={fmtUsd(stats.priceUsd)} />
+          <Stat
+            label="24h"
+            value={fmtPct(stats.h24)}
+            color={
+              stats.h24 == null
+                ? undefined
+                : stats.h24 >= 0
+                ? "text-green-400"
+                : "text-pink-400"
+            }
+          />
+          <Stat label="Holders" value={fmtInt(stats.holders)} />
+          <Stat label="Liquidity" value={fmtUsd(stats.liquidity)} />
+        </section>
+
+        {/* CHART */}
+        <section className="mb-10">
+          <div className="mb-3 flex items-end justify-between">
+            <h2 className="text-2xl font-bold tracking-tight">
+              <span className="text-purple-300">LIVE ·</span> The Chart
+            </h2>
+            <span className="text-[10px] uppercase tracking-widest text-white/45">
+              via DexScreener
+            </span>
+          </div>
+          <div className="relative w-full overflow-hidden rounded-2xl border border-purple-400/25 bg-black/60 shadow-[0_0_40px_rgba(168,85,247,0.1)]">
+            <div className="aspect-[16/9] min-h-[420px] sm:min-h-[480px]">
+              <iframe
+                src={`https://dexscreener.com/monad/${DEXSCREENER_PAIR}?embed=1&theme=dark&trades=0&info=0`}
+                title="MONI live chart on Monad"
+                loading="lazy"
+                allow="clipboard-write"
+                allowFullScreen
+                className="h-full w-full border-0"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* LORE */}
+        <section className="mb-10 grid gap-6 md:grid-cols-2">
+          <div className="rounded-3xl border border-white/10 bg-black/30 p-6">
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-purple-300">
+              The Lore
+            </div>
+            <h3 className="mt-1 text-2xl font-bold">The Yeti with the Pit Vipers</h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/75">
+              A purple yeti. Spiked horns. Rainbow Pit Vipers. Gold grills. A
+              gold chain with a MONI pendant. Paint-splattered overalls. He
+              came from a mountain — he looks like he came from a yacht.
+              <br />
+              <br />
+              That contradiction is the whole point.
+              <br />
+              <br />
+              Drawn by Monad's performance, he left his original summit to
+              climb this one. The community grew around the bit. <i>Send
+              it.</i> Six early supporters submitted art to the gallery. Then
+              the dev went quiet. The mountain stayed. The Yeti stayed. The
+              chains <b>definitely</b> stayed.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-black/30 p-6">
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-purple-300">
+              The CTO
+            </div>
+            <h3 className="mt-1 text-2xl font-bold">Pick up the brush</h3>
+            <p className="mt-3 text-sm leading-relaxed text-white/75">
+              The original creator gave us the mascot, the creed, and the
+              roadmap. We continue from where they stopped.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-white/75">
+              <li className="flex gap-2">
+                <span className="text-purple-300">→</span> 1% of every swap
+                routes to the MONI flywheel
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-300">→</span> Community-owned
+                socials, no dev keys
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-300">→</span> All 16 community
+                art pieces preserved
+              </li>
+              <li className="flex gap-2">
+                <span className="text-purple-300">→</span> MONI joins the
+                Monanimal pantheon — the drip
+              </li>
+            </ul>
+            <div className="mt-5 text-xs italic text-white/55">
+              "No empty promises. No false summits." — original team,
+              preserved.
+            </div>
+          </div>
+        </section>
+
+        {/* SOCIAL FOOTER */}
+        <section className="mb-6 flex flex-wrap items-center justify-center gap-3 text-xs">
           <a
-            href="/swap"
-            className="ml-auto rounded-md border border-purple-300/40 bg-purple-500/20 px-2.5 py-0.5 font-semibold text-white hover:bg-purple-500/30"
+            href="https://t.me/MoniTheYeti"
+            target="_blank"
+            rel="noopener"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-semibold text-white/80 hover:bg-white/10"
           >
-            Buy $MONI →
+            Telegram
           </a>
-        </div>
+          <a
+            href="https://x.com/MoniYetiMonad"
+            target="_blank"
+            rel="noopener"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-semibold text-white/80 hover:bg-white/10"
+          >
+            X / Twitter
+          </a>
+          <a
+            href={`https://monadexplorer.com/token/${MONI_ADDR}`}
+            target="_blank"
+            rel="noopener"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-semibold text-white/80 hover:bg-white/10"
+          >
+            Contract ↗
+          </a>
+        </section>
 
-        {/* TOP CARD */}
-        <Card>
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <img src="/Moni.png" alt="MONI the Yeti" className="h-14 w-14 rounded-2xl object-cover ring-2 ring-purple-400/40 shadow-[0_0_24px_rgba(168,85,247,0.4)]" />
-                <div>
-                  <div className="text-2xl font-bold">Stake ${symbol}</div>
-                  <div className="text-xs text-purple-200/80 tracking-wide">LOCK THE YETI · EARN THE YETI</div>
-                </div>
-              </div>
-              <div className="mt-3 text-sm text-white/70 max-w-2xl">
-                Pool-based rewards — funded by donations and early-unstake penalty flow. <b>No fake APR.</b>{" "}
-                Early unstake routes <b>5%</b> to the rewards pool and <b>10%</b> to the buyback wallet.
-                Bow to the chain.
-              </div>
-
-              <div className="mt-3 text-xs text-white/55">
-                Staking: <span className="font-mono">{short(STAKING)}</span> • Buyback:{" "}
-                <span className="font-mono">{short(buybackWallet)}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              <div className="text-xs text-white/70 leading-relaxed">
-                <div><b>Fees</b></div>
-                <div>{(normalFeeBps / 100).toFixed(2)}% unstake → pool</div>
-                <div>{(earlyPoolBps / 100).toFixed(2)}% early → pool + {(earlyBuyBps / 100).toFixed(2)}% → buyback</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-3 md:grid-cols-3">
-            <Stat label="Total Staked" value={`${fmt(totalStaked, decimals)} ${symbol}`} />
-            <Stat label="Rewards Pool" value={`${fmt(rewardsPool, decimals)} ${symbol}`} sub="Pool is distributed on sync" />
-            <Stat
-              label="Your Pending"
-              value={isConnected ? `${fmt(pending, decimals)} ${symbol}` : `Connect wallet`}
-              sub={isConnected ? "Live" : "to view rewards"}
-            />
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10" onClick={() => refetch()}>
-              Refresh
-            </button>
-
-            <button
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 disabled:opacity-50"
-              disabled={!isConnected || isPending}
-              onClick={() => writeContract({ address: STAKING, abi: stakingAbi, functionName: "syncRewards" })}
-            >
-              Sync Rewards
-            </button>
-
-            <button
-              className="rounded-xl bg-white/10 px-4 py-2 text-sm hover:bg-white/15 disabled:opacity-50"
-              disabled={!isConnected || isPending}
-              onClick={() => writeContract({ address: STAKING, abi: stakingAbi, functionName: "claim" })}
-            >
-              Claim
-            </button>
-          </div>
-
-          <div className="mt-3 text-[11px] text-white/50">
-            Note: small donations may not show immediately due to formatting/scale. Sync distributes rewards.
-          </div>
-        </Card>
-
-        {/* TWO COLUMN */}
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {/* LEFT: YOUR POSITION */}
-          <Card>
-            <div className="text-sm font-semibold">Your Position</div>
-
-            {!isConnected ? (
-              <div className="mt-3 text-sm text-white/70">Connect wallet to see your stake, lock, and pending.</div>
-            ) : (
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-white/65">Wallet</span>
-                  <span>{fmt(walletBal, decimals)} {symbol}</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-white/65">Your Staked</span>
-                  <span>{fmt(yourStaked, decimals)} {symbol}</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-white/65">Stakers</span>
-                  <span>{stakerCount.toString()}</span>
-                </div>
-
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/35 p-4">
-                  <div className="text-xs text-white/60">Lock</div>
-                  <div className="mt-1 font-semibold">{user.lockDays || 0} days</div>
-                  <div className="mt-1 text-xs text-white/55">
-                    Unlock: {unlockTimeMs ? new Date(unlockTimeMs).toLocaleString() : "—"}
-                  </div>
-
-                  {isEarly ? (
-                    <div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-100/90">
-                      ⚠️ Early unstake applies: {(earlyPoolBps/100).toFixed(2)}% pool + {(earlyBuyBps/100).toFixed(2)}% buyback (plus {(normalFeeBps/100).toFixed(2)}% normal).
-                    </div>
-                  ) : (
-                    <div className="mt-3 rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-100/90">
-                      ✅ No early penalty right now.
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* RIGHT: ACTIONS */}
-          <Card>
-            <div className="text-sm font-semibold">Stake / Unstake / Donate</div>
-
-            <div className="mt-4 grid grid-cols-4 gap-2">
-              {[30, 90, 180, 365].map((d) => (
-                <button
-                  key={d}
-                  className={cn(
-                    "rounded-xl border border-white/10 px-2 py-2 text-sm",
-                    lockDays === d
-                      ? "bg-purple-600/25 text-white shadow-[0_0_0_1px_rgba(168,85,247,0.30)]"
-                      : "bg-white/5 text-white/80 hover:bg-white/10"
-                  )}
-                  onClick={() => setLockDays(d as any)}
-                >
-                  {d}d
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-5">
-              <div className="text-xs text-white/60 mb-2">Stake</div>
-              <input className={inputClass} value={stakeAmt} onChange={(e) => setStakeAmt(e.target.value)} placeholder={`Amount (${symbol})`} />
-
-              {needsApprove ? (
-                <button
-                  className={btnPrimary + " mt-3"}
-                  disabled={!isConnected || isPending}
-                  onClick={() =>
-                    writeContract({
-                      address: MONI,
-                      abi: erc20Abi,
-                      functionName: "approve",
-                      args: [STAKING, maxUint256],
-                    })
-                  }
-                >
-                  Approve {symbol}
-                </button>
-              ) : (
-                <button
-                  className={btnPrimary + " mt-3"}
-                  disabled={!isConnected || isPending || stakeBn === 0n}
-                  onClick={() =>
-                    writeContract({
-                      address: STAKING,
-                      abi: stakingAbi,
-                      functionName: "stake",
-                      args: [stakeBn, lockDays],
-                    })
-                  }
-                >
-                  Stake
-                </button>
-              )}
-            </div>
-
-            <div className="mt-5">
-              <div className="text-xs text-white/60 mb-2">Unstake</div>
-              <input className={inputClass} value={unstakeAmt} onChange={(e) => setUnstakeAmt(e.target.value)} placeholder={`Amount (${symbol})`} />
-
-              <button
-                className={btnSecondary + " mt-3"}
-                disabled={!isConnected || isPending || unstakeBn === 0n}
-                onClick={() =>
-                  writeContract({
-                    address: STAKING,
-                    abi: stakingAbi,
-                    functionName: "unstake",
-                    args: [unstakeBn],
-                  })
-                }
-              >
-                Unstake
-              </button>
-            </div>
-
-            <div className="mt-6">
-              <div className="text-xs text-white/60 mb-2">Donate to Rewards Pool</div>
-              <input className={inputClass} value={donateAmt} onChange={(e) => setDonateAmt(e.target.value)} placeholder={`Amount (${symbol})`} />
-
-              <button
-                className={btnPrimary + " mt-3"}
-                disabled={!isConnected || isPending || donateBn === 0n}
-                onClick={() =>
-                  writeContract({
-                    address: STAKING,
-                    abi: stakingAbi,
-                    functionName: "addRewards",
-                    args: [donateBn],
-                  })
-                }
-              >
-                Donate
-              </button>
-
-              <div className="mt-3 text-[11px] text-white/55">
-                Anyone can add rewards. If tokens are sent directly to the contract press <b>Sync Rewards</b>.
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        <div className="mt-10 pb-10 text-center text-xs text-white/40">
-          Built by <span className="text-white/60 font-semibold">King Petty</span>
+        <div className="mb-2 text-center text-[10px] text-white/35">
+          monad mainnet · <span className="font-mono">{MONI_ADDR}</span>
         </div>
       </div>
     </main>

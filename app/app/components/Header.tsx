@@ -13,8 +13,8 @@ export default function Header() {
             className="h-10 w-10 rounded-xl border border-purple-400/30 bg-white/5 object-cover ring-1 ring-purple-500/20 group-hover:ring-purple-400/60 transition"
           />
           <div className="leading-tight">
-            <div className="text-base font-bold tracking-wide text-white">MoniStake</div>
-            <div className="text-xs text-purple-200/70">Lock the Yeti · Earn the Yeti</div>
+            <div className="text-base font-bold tracking-wide text-white">MONI</div>
+            <div className="text-xs text-purple-200/70">The Yeti of Monad</div>
           </div>
         </a>
 
@@ -23,7 +23,7 @@ export default function Header() {
             href="/"
             className="rounded-lg px-3 py-2 text-white/75 hover:bg-white/5 hover:text-white"
           >
-            Stake
+            Home
           </a>
           <a
             href="/swap"
@@ -56,13 +56,13 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile nav row (under header on small screens) */}
+      {/* Mobile nav row */}
       <nav className="mt-2 flex md:hidden gap-1 text-xs font-semibold uppercase tracking-wider">
         <a
           href="/"
           className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center text-white/80"
         >
-          Stake
+          Home
         </a>
         <a
           href="/swap"

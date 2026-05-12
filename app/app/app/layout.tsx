@@ -8,23 +8,23 @@ const siteUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "MoniStake · Lock $MONI, Earn $MONI",
+  title: "MONI · The Yeti of Monad",
   description:
-    "Stake $MONI on Monad. Pool-based rewards from donations + fee flow. Lock 30 / 90 / 180 / 365 days. Early unstake routes to buyback + reward pool. CTO-era staking for the Yeti.",
+    "MONI the Yeti — purple spirit of the Monad community. CTO-run. Buy $MONI on the universal swap, view the live chart, read the lore.",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
   },
   openGraph: {
-    title: "MoniStake · Stake $MONI on Monad",
-    description: "Lock the Yeti. Earn the Yeti. Pool-based rewards from fee flow.",
+    title: "MONI · The Yeti of Monad",
+    description: "Purple. Pit Vipers. Paint. Pump. CTO-run $MONI on Monad.",
     images: [{ url: "/Moni.png", width: 1024, height: 1024 }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MoniStake · Stake $MONI",
-    description: "Lock the Yeti. Earn the Yeti.",
+    title: "MONI · The Yeti of Monad",
+    description: "Purple. Pit Vipers. Paint. Pump.",
     images: ["/Moni.png"],
   },
 };
