@@ -13,6 +13,7 @@ type Stats = {
   h24?: number;
   holders?: number;
   liquidity?: number;
+  marketCap?: number;
 };
 
 function fmtUsd(n: number | undefined): string {
@@ -81,10 +82,12 @@ export default function Home() {
           )[0];
           const h24 = parseFloat(pair?.priceChange?.h24);
           const liq = parseFloat(pair?.liquidity?.usd);
+          const mc = parseFloat(pair?.marketCap ?? pair?.fdv);
           setStats((s) => ({
             ...s,
             h24: isNaN(h24) ? s.h24 : h24,
             liquidity: isNaN(liq) ? s.liquidity : liq,
+            marketCap: isNaN(mc) ? s.marketCap : mc,
           }));
         })
         .catch(() => {});
@@ -197,7 +200,10 @@ export default function Home() {
             }
           />
           <Stat label="Holders" value={fmtInt(stats.holders)} />
-          <Stat label="Liquidity" value={fmtUsd(stats.liquidity)} />
+          <Stat
+            label="Market Cap"
+            value={fmtUsd(stats.marketCap ?? (stats.priceUsd ? stats.priceUsd * 1e9 : undefined))}
+          />
         </section>
 
         {/* CHART */}

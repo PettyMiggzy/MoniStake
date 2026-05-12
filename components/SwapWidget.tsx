@@ -5,12 +5,10 @@ import {
   useAccount,
   useBalance,
   useReadContract,
-  useSendTransaction,
-  useWriteContract,
 } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { formatUnits, parseUnits, maxUint256 } from "viem";
-import { erc20Abi, wmonAbi, WMON_ADDRESS } from "@/lib/abi";
+import { formatUnits, parseUnits } from "viem";
+import { erc20Abi, WMON_ADDRESS } from "@/lib/abi";
 import {
   KNOWN_TOKENS,
   NATIVE_ZERO,
@@ -61,9 +59,6 @@ export default function SwapWidget({
   defaultTo?: MonoToken;
 }) {
   const { address, isConnected } = useAccount();
-  // wagmi v2: both hooks return both sync and async invokers
-  const { sendTransactionAsync } = useSendTransaction();
-  const { writeContractAsync } = useWriteContract();
 
   const [from, setFrom] = useState<MonoToken>(defaultFrom ?? KNOWN_TOKENS[0]);
   const [to, setTo] = useState<MonoToken>(defaultTo ?? KNOWN_TOKENS[1]);
@@ -289,94 +284,129 @@ export default function SwapWidget({
       return;
     }
     if (busy) return;
+
+    // Raw window.ethereum — wagmi/viem hang waiting for receipts on
+    // Monad RPC, so we bypass them entirely for the write path and
+    // mirror what chogi.xyz/swap + moyaki swap do (and have proven
+    // works end-to-end on this chain).
+    const eth: any =
+      typeof window !== "undefined" ? (window as any).ethereum : null;
+    if (!eth) {
+      setStatus({
+        kind: "error",
+        msg: "Web3 wallet not detected. Open in a wallet's browser.",
+      });
+      return;
+    }
+
     setBusy(true);
+
+    // Helpers that talk to the wallet RPC directly
+    async function sendRaw(tx: {
+      to: string;
+      data: string;
+      value?: string;
+    }): Promise<`0x${string}`> {
+      return (await eth.request({
+        method: "eth_sendTransaction",
+        params: [{ from: address, ...tx }],
+      })) as `0x${string}`;
+    }
+    async function waitMined(
+      hash: `0x${string}`,
+      timeoutMs = 75_000
+    ): Promise<boolean> {
+      const deadline = Date.now() + timeoutMs;
+      while (Date.now() < deadline) {
+        try {
+          const r = await eth.request({
+            method: "eth_getTransactionReceipt",
+            params: [hash],
+          });
+          if (r && r.blockNumber)
+            return (
+              r.status === "0x1" || r.status === 1 || r.status === true
+            );
+        } catch {
+          /* RPC blip — keep polling */
+        }
+        await new Promise((res) => setTimeout(res, 2500));
+      }
+      throw new Error("Confirmation timed out — check the explorer.");
+    }
+    function approveCalldata(spender: string, amount: bigint): string {
+      const sel = "0x095ea7b3";
+      const sp = spender.toLowerCase().replace(/^0x/, "").padStart(64, "0");
+      const am = amount.toString(16).padStart(64, "0");
+      return sel + sp + am;
+    }
+    const UINT_MAX =
+      BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
     try {
       const amountWei = parseUnits(amountIn, from.decimals);
 
-      // ─── PATH A: native MON, but going via WMON wrap to avoid bad routes ───
+      // ─── PATH A: wrap MON → WMON, then swap WMON → target ───
       if (isViaWrap) {
-        // Step 1: deposit MON into WMON
-        setStatus({
-          kind: "info",
-          msg: "Step 1 of 3 · Wrapping MON to WMON…",
+        setStatus({ kind: "info", msg: "Step 1 of 3 · Wrap MON to WMON…" });
+        const wrapHash = await sendRaw({
+          to: WMON_ADDRESS,
+          value: "0x" + amountWei.toString(16),
+          data: "0xd0e30db0", // deposit()
         });
-        const wrapHash = await writeContractAsync({
-          address: WMON_ADDRESS,
-          abi: wmonAbi,
-          functionName: "deposit",
-          value: amountWei,
-        });
-        setStatus({
-          kind: "info",
-          msg: "Step 1 confirmed. Step 2 of 3 · Approving WMON…",
-        });
+        const wrapOk = await waitMined(wrapHash);
+        if (!wrapOk) throw new Error("Wrap reverted on-chain.");
 
-        // Step 2: approve WMON to the Monorail router (if not already)
-        const currentAllow = (allowance as bigint | undefined) ?? 0n;
-        if (currentAllow < amountWei) {
-          await writeContractAsync({
-            address: WMON_ADDRESS,
-            abi: erc20Abi,
-            functionName: "approve",
-            args: [quote.transaction.to, maxUint256],
+        const haveWmon = (allowance as bigint | undefined) ?? 0n;
+        if (haveWmon < amountWei) {
+          setStatus({
+            kind: "info",
+            msg: "Step 2 of 3 · Approve WMON to router…",
           });
+          const apprHash = await sendRaw({
+            to: WMON_ADDRESS,
+            data: approveCalldata(quote.transaction.to, UINT_MAX),
+          });
+          await waitMined(apprHash);
         }
 
-        // Step 3: execute the WMON→target swap (Monorail tx)
-        setStatus({
-          kind: "info",
-          msg: "Step 3 of 3 · Signing the swap…",
-        });
-        const gasFromQuote = quote.gas_estimate
-          ? BigInt(Math.floor(quote.gas_estimate * 1.2))
-          : 800_000n;
-        const swapHash = await sendTransactionAsync({
+        setStatus({ kind: "info", msg: "Step 3 of 3 · Sign the swap…" });
+        const swapHash = await sendRaw({
           to: quote.transaction.to,
           data: quote.transaction.data,
-          value: 0n,
-          gas: gasFromQuote,
+          value: "0x0",
         });
         setLastTxHash(swapHash);
         setStatus({
           kind: "info",
           msg: "Swap submitted. Waiting for confirmation…",
         });
-        // busy will clear when receipt arrives
-        return;
+        return; // receipt watcher useEffect picks it up from lastTxHash
       }
 
-      // ─── PATH B: standard ERC20→x via Monorail ───
+      // ─── PATH B: ERC20 → x, approve first if needed ───
       if (!isFromNative) {
-        // FIX: was `(allowance ?? 0n) < need` originally written with bad
-        // operator precedence — has bitten swaps. Compute the comparison
-        // value explicitly.
         const need = BigInt(quote.input);
         const have = (allowance as bigint | undefined) ?? 0n;
         if (have < need) {
-          setStatus({
-            kind: "info",
-            msg: `Approving ${from.symbol}…`,
+          setStatus({ kind: "info", msg: `Approving ${from.symbol}…` });
+          const apprHash = await sendRaw({
+            to: from.address as string,
+            data: approveCalldata(quote.transaction.to, UINT_MAX),
           });
-          await writeContractAsync({
-            address: from.address as `0x${string}`,
-            abi: erc20Abi,
-            functionName: "approve",
-            args: [quote.transaction.to, maxUint256],
-          });
+          await waitMined(apprHash);
         }
       }
 
-      // ─── Path C (default): native MON or post-approve ERC20 swap ───
+      // ─── PATH C (default): native MON or post-approve ERC20 swap ───
       setStatus({ kind: "info", msg: "Sign the swap…" });
-      const gasFromQuote = quote.gas_estimate
-        ? BigInt(Math.floor(quote.gas_estimate * 1.2))
-        : 1_500_000n;
-      const hash = await sendTransactionAsync({
+      const valueHex = isFromNative
+        ? "0x" + BigInt(quote.transaction.value).toString(16)
+        : "0x0";
+      const hash = await sendRaw({
         to: quote.transaction.to,
         data: quote.transaction.data,
-        value: isFromNative ? BigInt(quote.transaction.value) : 0n,
-        gas: gasFromQuote,
+        value: valueHex,
       });
       setLastTxHash(hash);
       setStatus({
@@ -387,6 +417,7 @@ export default function SwapWidget({
       setStatus({ kind: "error", msg: explainRevert(e) });
       setBusy(false);
     }
+  }
   }
 
   function setMax() {
