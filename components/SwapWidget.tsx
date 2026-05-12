@@ -418,7 +418,6 @@ export default function SwapWidget({
       setBusy(false);
     }
   }
-  }
 
   function setMax() {
     if (!isFromNative) {
