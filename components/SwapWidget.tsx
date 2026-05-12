@@ -5,6 +5,7 @@ import {
   useAccount,
   useBalance,
   useReadContract,
+  useWalletClient,
 } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { formatUnits, parseUnits } from "viem";
@@ -59,6 +60,7 @@ export default function SwapWidget({
   defaultTo?: MonoToken;
 }) {
   const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
 
   const [from, setFrom] = useState<MonoToken>(defaultFrom ?? KNOWN_TOKENS[0]);
   const [to, setTo] = useState<MonoToken>(defaultTo ?? KNOWN_TOKENS[1]);
@@ -202,20 +204,48 @@ export default function SwapWidget({
     let cancelled = false;
 
     async function poll() {
-      const eth: any = (typeof window !== "undefined" && (window as any).ethereum) || null;
-      if (!eth) {
-        setStatus({ kind: "info", msg: "Submitted. Check your wallet for confirmation." });
-        setWaitingReceipt(false);
-        setBusy(false);
-        return;
+      // Use walletClient transport if available (works for WalletConnect),
+      // else fall back to window.ethereum (desktop injected), else use
+      // a public Monad RPC as last resort so polling never fails just
+      // because the wallet provider isn't available for read calls.
+      const wcReq = walletClient?.transport?.request as
+        | ((args: { method: string; params?: unknown[] }) => Promise<unknown>)
+        | undefined;
+      const injected: any =
+        typeof window !== "undefined" ? (window as any).ethereum : null;
+
+      async function getReceipt(hash: string): Promise<any> {
+        if (wcReq) {
+          return await wcReq({
+            method: "eth_getTransactionReceipt",
+            params: [hash],
+          });
+        }
+        if (injected) {
+          return await injected.request({
+            method: "eth_getTransactionReceipt",
+            params: [hash],
+          });
+        }
+        // Public RPC fallback — keeps polling even if wallet disconnected mid-tx
+        const r = await fetch("https://rpc.monad.xyz", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "eth_getTransactionReceipt",
+            params: [hash],
+          }),
+        });
+        const j = await r.json();
+        return j.result;
       }
+
       const deadline = Date.now() + 90_000; // 90s max
       while (!cancelled && Date.now() < deadline) {
         try {
-          const receipt = await eth.request({
-            method: "eth_getTransactionReceipt",
-            params: [lastTxHash],
-          });
+          const receipt = await getReceipt(lastTxHash);
           if (receipt && receipt.blockNumber) {
             if (cancelled) return;
             const ok =
@@ -249,7 +279,7 @@ export default function SwapWidget({
     return () => {
       cancelled = true;
     };
-  }, [lastTxHash]);
+  }, [lastTxHash, walletClient]);
 
   function pickToken(side: "in" | "out", t: MonoToken) {
     if (side === "in") {
@@ -285,16 +315,21 @@ export default function SwapWidget({
     }
     if (busy) return;
 
-    // Raw window.ethereum — wagmi/viem hang waiting for receipts on
-    // Monad RPC, so we bypass them entirely for the write path and
-    // mirror what chogi.xyz/swap + moyaki swap do (and have proven
-    // works end-to-end on this chain).
-    const eth: any =
+    // Get the active EIP-1193 provider. walletClient.transport.request
+    // works for ALL connectors — injected (MetaMask, Phantom, Rabby),
+    // WalletConnect (mobile wallet apps via QR), and Coinbase. Only
+    // fall back to window.ethereum if walletClient isn't ready.
+    const wcReq = walletClient?.transport?.request as
+      | ((args: { method: string; params?: unknown[] }) => Promise<unknown>)
+      | undefined;
+    const injected: any =
       typeof window !== "undefined" ? (window as any).ethereum : null;
-    if (!eth) {
+    const provider: { request: typeof wcReq } | { request: (a: any) => Promise<any> } | null =
+      wcReq ? { request: wcReq } : injected ? { request: injected.request.bind(injected) } : null;
+    if (!provider) {
       setStatus({
         kind: "error",
-        msg: "Web3 wallet not detected. Open in a wallet's browser.",
+        msg: "Wallet not ready. Try reconnecting from the top-right.",
       });
       return;
     }
@@ -308,9 +343,9 @@ export default function SwapWidget({
       value?: string;
       gas?: string;
     }): Promise<`0x${string}`> {
-      return (await eth.request({
+      return (await provider!.request({
         method: "eth_sendTransaction",
-        params: [{ from: address, gas: "0x186A0", ...tx }], // default 100k
+        params: [{ from: address, gas: "0x186A0", ...tx }],
       })) as `0x${string}`;
     }
     async function waitMined(
@@ -320,7 +355,7 @@ export default function SwapWidget({
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
         try {
-          const r = await eth.request({
+          const r: any = await provider!.request({
             method: "eth_getTransactionReceipt",
             params: [hash],
           });
