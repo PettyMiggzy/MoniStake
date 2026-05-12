@@ -30,8 +30,8 @@ CTO-run site for **$MONI** on Monad mainnet — purple yeti, Pit Vipers, gold ch
 
 ```bash
 git clone https://github.com/PettyMiggzy/MoniStake.git
-cd MoniStake/app/app
-cp ../.env.local.example .env.local
+cd MoniStake
+cp .env.local.example .env.local
 npm install
 npm run dev
 ```
@@ -42,57 +42,11 @@ Open `http://localhost:3000`.
 
 ### Vercel (recommended)
 
-The repo has a `vercel.json` at the root that tells Vercel where the
-Next.js project lives, so **you don't need to set Root Directory**.
-
 1. **New Project** → import `PettyMiggzy/MoniStake`
-2. Leave **Root Directory** as the default (`.` / repo root)
-3. Framework will auto-detect via vercel.json
-4. (Optional) Add env vars under **Settings → Environment Variables**
-   — the build will succeed without any env vars set thanks to the
-   baked-in defaults, but setting `NEXT_PUBLIC_SITE_URL` to your
-   real domain makes OG/Twitter previews look right.
-5. **Deploy**
+2. Vercel auto-detects Next.js — no Root Directory or build command needed
+3. (Optional) Add env vars under **Settings → Environment Variables**
+4. **Deploy**
 
-**Troubleshooting 404 on every route:**
-- This usually means the build failed. Open the Vercel deployment
-  → Build Logs. If you see TypeError about `projectId`, the
-  WalletConnect env var isn't being picked up. Fixed in this build
-  via a fallback default — just trigger a fresh deploy.
-- If "Build Output → Functions" is empty in the Vercel UI, the
-  vercel.json `buildCommand` didn't run from the right cwd. Verify
-  the file exists at the repo root and re-deploy.
-
-### Netlify
-
-`netlify.toml` is already in the repo. Set up:
-
-1. New site → import from `PettyMiggzy/MoniStake`
-2. **Base directory:** `app/app`
-3. **Build command:** `npm run build`
-4. **Publish directory:** `.next`
-5. Add env vars under Site settings → Environment variables
-6. Deploy
-
-### Required environment variables
-
-```
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=89d7a1882c0fa9a5bbe0a58accafc100
-NEXT_PUBLIC_MONI_TOKEN=0x0CC9B2e2AcD7BACfF79eb7dB48F5662B622E7777
-```
-
-Optional (recommended for production):
-
-```
-NEXT_PUBLIC_SITE_URL=https://your-domain.xyz
-NEXT_PUBLIC_RPC_URL=https://rpc.monad.xyz
-NEXT_PUBLIC_EXPLORER_URL=https://monadscan.com
-NEXT_PUBLIC_CHAIN_ID=143
-```
-
-> `NEXT_PUBLIC_SITE_URL` resolves OG/Twitter image URLs to absolute paths so social previews work. Defaults to `https://monistake.netlify.app` if unset.
->
-> All `NEXT_PUBLIC_*` values are exposed to the browser — they're configuration, not secrets.
 
 ## Fee routing
 
