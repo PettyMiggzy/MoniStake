@@ -6,7 +6,6 @@ import {
   useBalance,
   useReadContract,
   useSendTransaction,
-  useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -196,21 +195,66 @@ export default function SwapWidget({
     };
   }, [amountIn, from.address, to.address, slipBps, address, isFromNative]);
 
-  // Receipt watcher
-  const { isLoading: waitingReceipt, isSuccess: receiptSuccess } =
-    useWaitForTransactionReceipt({
-      hash: lastTxHash ?? undefined,
-      query: { enabled: !!lastTxHash },
-    });
+  // Receipt watcher — raw eth_getTransactionReceipt polling. We don't use
+  // wagmi's useWaitForTransactionReceipt because viem stalls forever on
+  // Monad's RPC (returns string "undefined" for some fields it doesn't
+  // expect, blocks waiting on event matchers, etc). Polling directly
+  // mirrors what chogi/moyaki swap pages do and lands every time.
+  const [waitingReceipt, setWaitingReceipt] = useState(false);
   useEffect(() => {
-    if (receiptSuccess && lastTxHash) {
-      setStatus({
-        kind: "success",
-        msg: `Swap confirmed.`,
-      });
-      setBusy(false);
+    if (!lastTxHash) return;
+    setWaitingReceipt(true);
+    let cancelled = false;
+
+    async function poll() {
+      const eth: any = (typeof window !== "undefined" && (window as any).ethereum) || null;
+      if (!eth) {
+        setStatus({ kind: "info", msg: "Submitted. Check your wallet for confirmation." });
+        setWaitingReceipt(false);
+        setBusy(false);
+        return;
+      }
+      const deadline = Date.now() + 90_000; // 90s max
+      while (!cancelled && Date.now() < deadline) {
+        try {
+          const receipt = await eth.request({
+            method: "eth_getTransactionReceipt",
+            params: [lastTxHash],
+          });
+          if (receipt && receipt.blockNumber) {
+            if (cancelled) return;
+            const ok =
+              receipt.status === "0x1" ||
+              receipt.status === 1 ||
+              receipt.status === true;
+            setStatus(
+              ok
+                ? { kind: "success", msg: "Swap confirmed." }
+                : { kind: "error", msg: "Tx reverted on-chain. Bump slippage to 10% and retry." }
+            );
+            setWaitingReceipt(false);
+            setBusy(false);
+            return;
+          }
+        } catch {
+          /* RPC blip — keep polling */
+        }
+        await new Promise((r) => setTimeout(r, 2500));
+      }
+      if (!cancelled) {
+        setStatus({
+          kind: "info",
+          msg: "Still pending — check the explorer for status.",
+        });
+        setWaitingReceipt(false);
+        setBusy(false);
+      }
     }
-  }, [receiptSuccess, lastTxHash]);
+    poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [lastTxHash]);
 
   function pickToken(side: "in" | "out", t: MonoToken) {
     if (side === "in") {
