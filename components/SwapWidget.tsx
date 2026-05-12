@@ -319,14 +319,16 @@ export default function SwapWidget({
     // works for ALL connectors — injected (MetaMask, Phantom, Rabby),
     // WalletConnect (mobile wallet apps via QR), and Coinbase. Only
     // fall back to window.ethereum if walletClient isn't ready.
-    const wcReq = walletClient?.transport?.request as
-      | ((args: { method: string; params?: unknown[] }) => Promise<unknown>)
-      | undefined;
+    type RequestFn = (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+    const wcReq = walletClient?.transport?.request as RequestFn | undefined;
     const injected: any =
       typeof window !== "undefined" ? (window as any).ethereum : null;
-    const provider: { request: typeof wcReq } | { request: (a: any) => Promise<any> } | null =
-      wcReq ? { request: wcReq } : injected ? { request: injected.request.bind(injected) } : null;
-    if (!provider) {
+    const request: RequestFn | null = wcReq
+      ? wcReq
+      : injected
+      ? (args) => injected.request(args)
+      : null;
+    if (!request) {
       setStatus({
         kind: "error",
         msg: "Wallet not ready. Try reconnecting from the top-right.",
@@ -343,7 +345,7 @@ export default function SwapWidget({
       value?: string;
       gas?: string;
     }): Promise<`0x${string}`> {
-      return (await provider!.request({
+      return (await request!({
         method: "eth_sendTransaction",
         params: [{ from: address, gas: "0x186A0", ...tx }],
       })) as `0x${string}`;
@@ -355,7 +357,7 @@ export default function SwapWidget({
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
         try {
-          const r: any = await provider!.request({
+          const r: any = await request!({
             method: "eth_getTransactionReceipt",
             params: [hash],
           });
