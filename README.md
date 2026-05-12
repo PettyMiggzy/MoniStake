@@ -42,11 +42,26 @@ Open `http://localhost:3000`.
 
 ### Vercel (recommended)
 
-1. New project → import `PettyMiggzy/MoniStake`
-2. **Root directory:** `app/app`
-3. Framework preset auto-detects Next.js
-4. Add env vars under Settings → Environment Variables
-5. Deploy
+The repo has a `vercel.json` at the root that tells Vercel where the
+Next.js project lives, so **you don't need to set Root Directory**.
+
+1. **New Project** → import `PettyMiggzy/MoniStake`
+2. Leave **Root Directory** as the default (`.` / repo root)
+3. Framework will auto-detect via vercel.json
+4. (Optional) Add env vars under **Settings → Environment Variables**
+   — the build will succeed without any env vars set thanks to the
+   baked-in defaults, but setting `NEXT_PUBLIC_SITE_URL` to your
+   real domain makes OG/Twitter previews look right.
+5. **Deploy**
+
+**Troubleshooting 404 on every route:**
+- This usually means the build failed. Open the Vercel deployment
+  → Build Logs. If you see TypeError about `projectId`, the
+  WalletConnect env var isn't being picked up. Fixed in this build
+  via a fallback default — just trigger a fresh deploy.
+- If "Build Output → Functions" is empty in the Vercel UI, the
+  vercel.json `buildCommand` didn't run from the right cwd. Verify
+  the file exists at the repo root and re-deploy.
 
 ### Netlify
 
