@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>THE PANTHEON · The Monanimals + MONI</title>
+<meta name="description" content="The five canonical Monanimals — Molandak, Chog, Moyaki, Mouch, Salmonad — and MONI, joining the pantheon.">
+<meta property="og:title" content="THE PANTHEON · The Monanimals + MONI">
+<meta property="og:image" content="/Moni.png">
+<meta name="theme-color" content="#a855f7">
+
+<link rel="icon" type="image/png" href="/Moni.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Space+Grotesk:wght@400;500;700&family=Bungee&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #050211;
+  --ink: #f3eefe;
+  --ink-dim: #b9a8d8;
+  --purple: #a855f7;
+  --purple-deep: #6b21a8;
+  --purple-soft: #c4a3ff;
+  --magenta: #d946ef;
+  --gold: #fbbf24;
+  --green: #22c55e;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100%; }
+body {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  color: var(--ink); background: var(--bg);
+  background-image:
+    radial-gradient(1400px 800px at 50% -20%, rgba(168, 85, 247, 0.45), transparent 60%),
+    radial-gradient(900px 500px at 10% 40%, rgba(217, 70, 239, 0.18), transparent 60%);
+  overflow-x: hidden; line-height: 1.5; min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 22px; max-width: 1180px; margin: 0 auto; position: relative; z-index: 5;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand img {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 2px solid var(--purple); box-shadow: 0 0 22px rgba(168, 85, 247, 0.55);
+  object-fit: cover;
+}
+.brand-text-n {
+  font-family: 'Cinzel', serif; font-weight: 800; font-size: 18px;
+  letter-spacing: 3px; color: #fff;
+}
+.brand-text-s {
+  font-size: 9px; letter-spacing: 2.5px; color: var(--gold);
+  margin-top: 2px; text-transform: uppercase;
+}
+.nav-back {
+  font-family: 'Bungee', sans-serif; font-size: 11px;
+  letter-spacing: 1.8px; color: var(--ink);
+  padding: 9px 14px; border: 1.5px solid rgba(255,255,255,.18); border-radius: 8px;
+}
+.nav-back:hover { border-color: var(--gold); box-shadow: 0 0 14px rgba(251, 191, 36, 0.3); }
+
+.hero {
+  text-align: center; padding: 36px 20px 24px; position: relative; z-index: 4;
+  max-width: 760px; margin: 0 auto;
+}
+.hero-eyebrow {
+  font-family: 'Bungee', sans-serif; font-size: 10px;
+  letter-spacing: 4px; color: var(--gold); text-transform: uppercase;
+}
+.hero h1 {
+  font-family: 'Cinzel', serif; font-weight: 900;
+  font-size: clamp(40px, 8.5vw, 78px);
+  letter-spacing: 5px; margin: 6px 0 12px;
+  background: linear-gradient(135deg, #fff 0%, var(--purple-soft) 40%, var(--purple) 70%, var(--gold) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: 0 0 60px rgba(168, 85, 247, 0.4); line-height: 0.95;
+}
+.hero-sub {
+  color: var(--ink-dim); font-size: 14px; letter-spacing: 0.3px;
+  max-width: 580px; margin: 0 auto;
+}
+.hero-sub b { color: var(--gold); }
+
+.grid-wrap { max-width: 1180px; margin: 30px auto 20px; padding: 0 16px; }
+.grid {
+  display: grid; gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.card {
+  position: relative;
+  padding: 20px 18px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
+  border: 1.5px solid rgba(168, 85, 247, 0.18);
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  display: flex; flex-direction: column;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 20px 50px rgba(168, 85, 247, 0.18);
+}
+.card.featured {
+  background: linear-gradient(180deg, rgba(168, 85, 247, 0.16), rgba(217, 70, 239, 0.08));
+  border-color: var(--gold);
+  box-shadow: 0 14px 40px rgba(251, 191, 36, 0.18);
+}
+.card.featured::after {
+  content: 'PROUD MEMBER';
+  position: absolute; top: 14px; right: 14px;
+  font-family: 'Bungee', sans-serif; font-size: 8px;
+  letter-spacing: 1.4px;
+  padding: 4px 8px; border-radius: 5px;
+  background: var(--gold); color: #1a0a3a;
+}
+
+.card-image {
+  display: flex; align-items: center; justify-content: center;
+  height: 180px; margin: 4px 0 12px;
+  background: radial-gradient(circle at 50% 60%, rgba(168, 85, 247, 0.16), transparent 70%);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.card-image img {
+  max-height: 170px; max-width: 80%; object-fit: contain;
+  filter: drop-shadow(0 6px 20px rgba(168, 85, 247, 0.4));
+}
+.card-image .glyph {
+  font-size: 92px; line-height: 1;
+  filter: drop-shadow(0 6px 20px rgba(168, 85, 247, 0.4));
+}
+
+.card-name {
+  font-family: 'Cinzel', serif; font-weight: 800;
+  font-size: 22px; letter-spacing: 2.5px;
+  margin-bottom: 4px;
+}
+.card-tag {
+  font-family: 'Bungee', sans-serif; font-size: 9px;
+  letter-spacing: 1.8px; color: var(--gold);
+  text-transform: uppercase; margin-bottom: 10px;
+}
+.card-lore {
+  font-size: 12.5px; color: var(--ink-dim); line-height: 1.6;
+  flex-grow: 1;
+}
+.card-foot {
+  margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.card-foot a {
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+  font-size: 11px; letter-spacing: 1px;
+  color: var(--purple-soft); padding: 4px 9px;
+  border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 6px;
+}
+.card-foot a:hover { color: var(--gold); border-color: var(--gold); }
+
+/* Footer */
+footer {
+  text-align: center; padding: 40px 20px 60px;
+  font-size: 11px; color: rgba(255,255,255,0.45);
+  letter-spacing: 1px;
+}
+footer a { color: var(--gold); }
+
+.note {
+  max-width: 720px; margin: 30px auto 0; padding: 18px 22px;
+  background: rgba(255,255,255,0.04);
+  border: 1px dashed rgba(168, 85, 247, 0.3);
+  border-radius: 14px;
+  font-size: 12px; color: var(--ink-dim); text-align: center;
+}
+.note b { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="/" class="brand">
+    <img src="/Moni.png" alt="MONI">
+    <div>
+      <div class="brand-text-n">MONI</div>
+      <div class="brand-text-s">The Pantheon</div>
+    </div>
+  </a>
+  <a href="/" class="nav-back">← HOME</a>
+</header>
+
+<section class="hero">
+  <div class="hero-eyebrow">The Monanimals · For the Nads · By the Nads</div>
+  <h1>THE PANTHEON</h1>
+  <p class="hero-sub">
+    Five cultural inhabitants of the Monad multiverse — born from memes,
+    raised by the community. <b>MONI joins the pantheon</b> as the yeti of
+    the mountain.
+  </p>
+</section>
+
+<div class="grid-wrap">
+  <div class="grid">
+
+    <!-- MOLANDAK -->
+    <div class="card">
+      <div class="card-image"><span class="glyph">🦔</span></div>
+      <div class="card-name">MOLANDAK</div>
+      <div class="card-tag">The Hedgehog · First Born</div>
+      <p class="card-lore">
+        The first Monanimal. A purple hedgehog born from a time paradox in
+        the Monad Discord — leader of the pack, but only because he's funny.
+        Name from the Indonesian <i>landak</i>.
+      </p>
+      <div class="card-foot">
+        <a href="https://x.com/molandak" target="_blank" rel="noopener">X</a>
+      </div>
+    </div>
+
+    <!-- CHOG -->
+    <div class="card">
+      <div class="card-image"><span class="glyph">🐱</span></div>
+      <div class="card-name">CHOG</div>
+      <div class="card-tag">The Painter · Cat-Like</div>
+      <p class="card-lore">
+        A rounder, cuter Molandak born from an AI glitch — became his own
+        Monanimal. The gentle artist of the multiverse. Real name Monald
+        but everyone calls him Chog.
+      </p>
+      <div class="card-foot">
+        <a href="https://x.com/chog_xyz" target="_blank" rel="noopener">X</a>
+      </div>
+    </div>
+
+    <!-- MOYAKI -->
+    <div class="card">
+      <div class="card-image"><span class="glyph">🍣</span></div>
+      <div class="card-name">MOYAKI</div>
+      <div class="card-tag">The Mystery · Half Cat Half Salmon</div>
+      <p class="card-lore">
+        Named by CEO Keone, adopted by the community. Half cat, half salmon.
+        Some say his story vanished with Atlantis. Owns a pub where the
+        five Monanimals plot.
+      </p>
+      <div class="card-foot">
+        <a href="https://x.com/moyaki_xyz" target="_blank" rel="noopener">X</a>
+      </div>
+    </div>
+
+    <!-- MOUCH -->
+    <div class="card">
+      <div class="card-image"><span class="glyph">🪰</span></div>
+      <div class="card-name">MOUCH</div>
+      <div class="card-tag">The Fly · Cult Favorite</div>
+      <p class="card-lore">
+        A purple fly born from a Frenchnad audio recording. Inspires artists
+        on Fridays. Laser-resistant. Loves spiders. The Cult of Mouch meets
+        weekly. His nemesis Antonio puts him on pizza.
+      </p>
+      <div class="card-foot">
+        <a href="https://x.com/mouch_xyz" target="_blank" rel="noopener">X</a>
+      </div>
+    </div>
+
+    <!-- SALMONAD -->
+    <div class="card">
+      <div class="card-image"><img src="/monanimals/salmonad.png" alt="Salmonad"></div>
+      <div class="card-name">SALMONAD</div>
+      <div class="card-tag">The Fish · Salmoposted</div>
+      <p class="card-lore">
+        The quiet fish, brilliant innovator. So iconic the term
+        <i>salmoposting</i> was born — when nads flood a thread with endless
+        Salmonad replies, no explanation needed.
+      </p>
+      <div class="card-foot">
+        <a href="https://x.com/salmonad_xyz" target="_blank" rel="noopener">X</a>
+      </div>
+    </div>
+
+    <!-- MONI — featured -->
+    <div class="card featured">
+      <div class="card-image"><img src="/Moni.png" alt="MONI"></div>
+      <div class="card-name">MONI</div>
+      <div class="card-tag">The Yeti · The Mountain</div>
+      <p class="card-lore">
+        The yeti of the Monitain. Pit Vipers, iced-out chain, send-it
+        energy. Built by the community, for the community. Joining the
+        pantheon. <i>"No empty promises. No false summits."</i>
+      </p>
+      <div class="card-foot">
+        <a href="https://x.com/MoniYetiMonad" target="_blank" rel="noopener">X</a>
+        <a href="/swap">SWAP</a>
+        <a href="/">HOME</a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="note">
+    Character art credits: <b>Salmonad</b> by Mondalf · the rest of the
+    Monanimal art is sourced from the <a href="https://monadverse.land/" style="color: var(--gold);" target="_blank" rel="noopener">Monadverse</a>
+    community. Better transparent PNGs landing soon — community drops welcome.
+  </div>
+</div>
+
+<footer>
+  $MONI on Monad ·
+  <a href="/">HOME</a> ·
+  <a href="/swap">SWAP</a> ·
+  <a href="/contact">CONTACT</a> ·
+  <a href="https://x.com/MoniYetiMonad" target="_blank" rel="noopener">X</a>
+</footer>
+
+</body>
+</html>

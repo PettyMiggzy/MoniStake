@@ -8,8 +8,10 @@ const NAV = [
   { label: "About", href: "/#about" },
   { label: "Roadmap", href: "/#roadmap" },
   { label: "Gallery", href: "/#gallery" },
+  { label: "Pantheon", href: "/pantheon" },
   { label: "Submit", href: "/#submit", highlight: true },
   { label: "Swap", href: "/swap" },
+  { label: "Contact", href: "/contact" },
   { label: "Monad", href: "https://www.monad.xyz", external: true },
 ];
 

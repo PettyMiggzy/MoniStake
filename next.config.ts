@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     return [
       // Serve the static moyaki-style swap engine at /swap
       { source: "/swap", destination: "/swap.html" },
+      // The Pantheon — Monanimals + MONI
+      { source: "/pantheon", destination: "/pantheon.html" },
+      // Contact page
+      { source: "/contact", destination: "/contact.html" },
     ];
   },
 };
