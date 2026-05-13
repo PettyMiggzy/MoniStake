@@ -242,30 +242,72 @@ function explainRevert(err){
   return m || 'Unknown error';
 }
 
+const WMON_ADDRESS_INTERNAL = '0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A';
+
 async function executeSwap({from, to, amountHuman, slippageBps, account, onApproveStarted, onApproveConfirmed}){
   const fromAddr = (from && from !== NATIVE_ZERO) ? from : NATIVE_ZERO;
   const toAddr   = (to && to !== NATIVE_ZERO)     ? to   : NATIVE_ZERO;
   if (fromAddr.toLowerCase() === toAddr.toLowerCase()){
     throw new Error('From and To tokens are the same.');
   }
-  const q = await quoteRoute({
+
+  // Native MON → token route check. Monorail greedily picks "best price"
+  // routes that look optimal in simulation but revert on-chain on thin
+  // pools (compounding slippage across hops). For thin tokens like MONI
+  // the WMON→target route is a clean 1-hop on the actual pool. Detect
+  // this and silently re-route via WMON.
+  let q = await quoteRoute({
     from: fromAddr, to: toAddr,
     amount: amountHuman, sender: account, slippageBps,
   });
+  let usedSrc = fromAddr;
+  let didWrap = false;
+  if (fromAddr === NATIVE_ZERO && q.routes && q.routes[0] && q.routes[0].length >= 2){
+    try {
+      const alt = await quoteRoute({
+        from: WMON_ADDRESS_INTERNAL, to: toAddr,
+        amount: amountHuman, sender: account, slippageBps,
+      });
+      const altHops = alt.routes && alt.routes[0] ? alt.routes[0].length : 99;
+      if (altHops < q.routes[0].length){
+        q = alt;
+        usedSrc = WMON_ADDRESS_INTERNAL;
+        didWrap = true;
+      }
+    } catch(_) {}
+  }
   if (!q.transaction) throw new Error('No transaction returned');
 
-  const isNativeFrom = fromAddr === NATIVE_ZERO;
+  const isNativeFrom = usedSrc === NATIVE_ZERO;
+
+  // Pre-step (silent): if we switched to the WMON route, wrap user's MON
+  // into WMON in a separate tx first. UI just shows the same "approving…"
+  // / "sign in wallet…" flow as the normal approve path — no "wrap" wording.
+  if (didWrap){
+    const amountWei = parseUnitsBig(amountHuman, 18);
+    if (onApproveStarted) onApproveStarted(); // reuse approve callback for status
+    const wrapTx = await sendTx({
+      from: account,
+      to: WMON_ADDRESS_INTERNAL,
+      data: '0xd0e30db0', // deposit()
+      value: '0x' + amountWei.toString(16),
+      gas: '0x13880', // 80k
+    });
+    const wrapRec = await waitReceipt(wrapTx, 90000);
+    if (!wrapRec) throw new Error('First step not confirmed in 90s — try again');
+    if (onApproveConfirmed) onApproveConfirmed(wrapTx);
+  }
 
   if (!isNativeFrom){
     const spender = q.transaction.to;
     const amountInWei = BigInt(q.input);
-    const current = await tokenAllowance(fromAddr, account, spender);
+    const current = await tokenAllowance(usedSrc, account, spender);
     if (current < amountInWei){
       if (onApproveStarted) onApproveStarted();
       const approveData = tokenIface.encodeFunctionData('approve', [spender, (2n**256n - 1n)]);
-      const simA = await simulateCall(fromAddr, approveData, account, null);
+      const simA = await simulateCall(usedSrc, approveData, account, null);
       if (!simA.ok) throw new Error('Approve will fail: ' + explainRevert(simA.error));
-      const approveTx = await sendTx({ from: account, to: fromAddr, data: approveData });
+      const approveTx = await sendTx({ from: account, to: usedSrc, data: approveData });
       const rec = await waitReceipt(approveTx, 90000);
       if (!rec) throw new Error('Approve tx not confirmed in 90s — try again');
       if (onApproveConfirmed) onApproveConfirmed(approveTx);
