@@ -29,7 +29,14 @@ export const monad = {
 export const chains = [monad as any];
 
 export const wagmiConfig = getDefaultConfig({
-  appName: "MONI",
+  appName: "MONI · The Yeti of Monad",
+  appDescription:
+    "The community-takeover yeti memecoin on Monad. Buy $MONI through the universal Monorail swap.",
+  appUrl:
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://trade.monimonad.com",
+  appIcon:
+    (process.env.NEXT_PUBLIC_SITE_URL ?? "https://trade.monimonad.com") +
+    "/Moni.png",
   projectId,
   chains: chains as any,
   transports: {
