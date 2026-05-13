@@ -88,7 +88,7 @@ export default function Header() {
               TG
             </a>
             <a
-              href="https://x.com/MoniYetiMonad"
+              href="https://x.com/monadmonicto"
               target="_blank"
               rel="noopener"
               className="hidden md:inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs font-bold text-white/80 hover:bg-purple-500/15 hover:text-white"
@@ -165,7 +165,7 @@ export default function Header() {
                 Telegram
               </a>
               <a
-                href="https://x.com/MoniYetiMonad"
+                href="https://x.com/monadmonicto"
                 target="_blank"
                 rel="noopener"
                 onClick={() => setMobileOpen(false)}

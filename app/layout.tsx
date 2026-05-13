@@ -97,8 +97,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    site: "@MoniYetiMonad",
-    creator: "@MoniYetiMonad",
+    site: "@monadmonicto",
+    creator: "@monadmonicto",
     title: "MONI · The Yeti of Monad",
     description:
       "Purple. Pit Vipers. Paint. Pump. CTO-run $MONI on Monad mainnet.",
@@ -131,7 +131,7 @@ const organizationLd = {
   logo: `${siteUrl}/Moni.png`,
   description,
   foundingDate: "2025-12",
-  sameAs: ["https://x.com/MoniYetiMonad", "https://t.me/MoniTheYeti"],
+  sameAs: ["https://x.com/monadmonicto", "https://t.me/MoniTheYeti"],
   contactPoint: {
     "@type": "ContactPoint",
     email: "admin@monimonad.com",
