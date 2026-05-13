@@ -122,7 +122,7 @@ export default function AboutPage() {
           <p className="text-white/80">
             MONI is the purple yeti mascot of the Monad community. It started
             as community art in the BeBe TG group — a chained-out yeti with
-            Pit Vipers, painting the Monitain — and graduated into a fully
+            Pit Vipers, paint can in hand — and graduated into a fully
             community-run memecoin on Monad mainnet.
           </p>
           <p className="text-white/80">
@@ -188,57 +188,6 @@ export default function AboutPage() {
             mountain spirit of Monad. Different vibe, same culture: built by
             the nads, for the nads.
           </p>
-        </section>
-
-        <section className="mb-12 space-y-4">
-          <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">
-            The Monitain — five tiers, one mountain
-          </h2>
-          <p className="text-white/80">
-            Every MONI holder has a tier. Each tier unlocks community perks:
-            gallery priority, art bounty pool access, OG mint list slots for
-            the Yeti Squad NFT, DAO whitelist.
-          </p>
-          <div className="overflow-hidden rounded-2xl border border-purple-400/30">
-            <table className="w-full text-sm">
-              <thead className="bg-purple-900/40 text-left text-[10px] uppercase tracking-[0.18em] text-yellow-300">
-                <tr>
-                  <th className="p-3">Tier</th>
-                  <th className="p-3">Range</th>
-                  <th className="p-3">Perks</th>
-                </tr>
-              </thead>
-              <tbody className="text-white/80">
-                <tr className="border-t border-white/10">
-                  <td className="p-3">🦐 Shrimp</td>
-                  <td className="p-3">0 – 100K</td>
-                  <td className="p-3">Base camp · the journey starts</td>
-                </tr>
-                <tr className="border-t border-white/10">
-                  <td className="p-3">🥾 Sherpa</td>
-                  <td className="p-3">100K – 500K</td>
-                  <td className="p-3">Trail unlocked · chain earned</td>
-                </tr>
-                <tr className="border-t border-white/10">
-                  <td className="p-3">⛏️ Climber</td>
-                  <td className="p-3">500K – 1M</td>
-                  <td className="p-3">
-                    Pit Vipers · bounty list · gallery priority
-                  </td>
-                </tr>
-                <tr className="border-t border-white/10">
-                  <td className="p-3">💎 Diamond</td>
-                  <td className="p-3">1M – 5M</td>
-                  <td className="p-3">OG mint list · DAO whitelist</td>
-                </tr>
-                <tr className="border-t border-white/10">
-                  <td className="p-3">👑 Emperor</td>
-                  <td className="p-3">5M+</td>
-                  <td className="p-3">The throne · direct line to the CTO</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </section>
 
         <section className="mb-12 space-y-4">

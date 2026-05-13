@@ -52,20 +52,6 @@ const FAQS = [
     ),
   },
   {
-    q: "What is the Monitain tier system?",
-    a: (
-      <>
-        Five tiers: 🦐 Shrimp (0–100K), 🥾 Sherpa (100K–500K), ⛏️ Climber
-        (500K–1M), 💎 Diamond (1M–5M), 👑 Emperor (5M+). Each unlocks perks:
-        gallery priority, art bounties, OG mint list, DAO whitelist. See the{" "}
-        <a href="/about" className="text-yellow-300 underline">
-          full tier breakdown
-        </a>
-        .
-      </>
-    ),
-  },
-  {
     q: "Who are the Monanimals?",
     a: (
       <>

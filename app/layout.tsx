@@ -7,7 +7,7 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://monistake.vercel.app";
 
 const description =
-  "MONI is the purple yeti of Monad — a 100% community-run (CTO) meme token on Monad mainnet. Buy $MONI through the universal Monorail swap, climb the Monitain tier system, mint community art via the Forge, and join the Pantheon of Monanimals. Built by the nads, for the nads.";
+  "MONI is the purple yeti of Monad — a 100% community-run (CTO) meme token on Monad mainnet. Buy $MONI through the universal Monorail swap, mint community art via the Forge, and join the Pantheon of Monanimals. Built by the nads, for the nads.";
 
 const keywords = [
   "MONI",
@@ -21,7 +21,6 @@ const keywords = [
   "Monad meme token",
   "Monistake",
   "MONI staking",
-  "Monitain",
   "Monanimals",
   "Monanimal",
   "Molandak",
@@ -185,15 +184,6 @@ const faqLd = {
         "@type": "Answer",
         text:
           "MONI is deployed on Monad mainnet (chain ID 143). You'll need MON in your wallet for gas. Bridge from Ethereum or another chain via bridge.monad.xyz, or buy MON on a CEX that supports Monad.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "What is the Monitain?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text:
-          "The Monitain is MONI's tier system. Five tiers — Shrimp (0–100K), Sherpa (100K–500K), Climber (500K–1M), Diamond (1M–5M), and Emperor (5M+) — each unlock community perks: gallery priority, art bounties, OG mint list slots for the Yeti Squad NFT, and DAO whitelist.",
       },
     },
     {
