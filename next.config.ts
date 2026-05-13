@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
     return [
       // Serve the static moyaki-style swap engine at /swap
       { source: "/swap", destination: "/swap.html" },
+      // The Monitain — interactive tier-finder + climb visualization
+      { source: "/monitain", destination: "/monitain.html" },
     ];
   },
 };

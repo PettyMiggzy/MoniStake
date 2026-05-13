@@ -288,6 +288,78 @@ export default function Home() {
           </div>
         </section>
 
+        {/* THE MONITAIN — flagship CTA */}
+        <section className="mb-12 md:mb-16">
+          <a
+            href="/monitain"
+            className="group relative block overflow-hidden rounded-3xl border border-purple-400/30 bg-gradient-to-br from-purple-950/60 via-violet-900/40 to-fuchsia-950/60 p-8 md:p-12 transition hover:border-yellow-400/50"
+            style={{
+              boxShadow:
+                "0 30px 80px rgba(168, 85, 247, 0.25), inset 0 0 80px rgba(168, 85, 247, 0.08)",
+            }}
+          >
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-12 -top-16 h-72 w-72 rounded-full opacity-30 blur-3xl transition-opacity group-hover:opacity-50"
+              style={{
+                background:
+                  "radial-gradient(circle, rgba(251,191,36,0.6) 0%, rgba(168,85,247,0.4) 50%, transparent 80%)",
+              }}
+            />
+            <div className="relative grid items-center gap-6 md:grid-cols-[1fr_auto]">
+              <div>
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.3em] text-yellow-300/90">
+                  New · Connect your wallet
+                </div>
+                <h2
+                  className="mb-3 text-4xl font-extrabold leading-[0.95] tracking-tight md:text-6xl"
+                  style={{
+                    fontFamily:
+                      "Cinzel, ui-serif, Georgia, Cambria, serif",
+                    backgroundImage:
+                      "linear-gradient(135deg, #fff 0%, #c4a3ff 35%, #a855f7 65%, #fbbf24 100%)",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    color: "transparent",
+                  }}
+                >
+                  THE MONITAIN
+                </h2>
+                <p className="mb-4 max-w-md text-sm text-white/75 md:text-base">
+                  Five tiers, one mountain. Shrimp · Sherpa · Climber · Diamond
+                  · Emperor. Connect your wallet, find your place on the climb,
+                  share your altitude.
+                </p>
+                <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-purple-200/80">
+                  <span className="rounded-md bg-purple-500/20 px-2 py-1">
+                    🦐 SHRIMP
+                  </span>
+                  <span className="rounded-md bg-purple-500/20 px-2 py-1">
+                    🥾 SHERPA
+                  </span>
+                  <span className="rounded-md bg-purple-500/20 px-2 py-1">
+                    ⛏️ CLIMBER
+                  </span>
+                  <span className="rounded-md bg-purple-500/20 px-2 py-1">
+                    💎 DIAMOND
+                  </span>
+                  <span className="rounded-md bg-yellow-500/25 px-2 py-1 text-yellow-200">
+                    👑 EMPEROR
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-end">
+                <span
+                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-yellow-400 to-amber-500 px-8 py-4 text-sm font-extrabold uppercase tracking-[0.2em] text-purple-950 shadow-[0_14px_40px_rgba(251,191,36,0.4)] transition group-hover:scale-[1.04]"
+                  style={{ fontFamily: "Bungee, sans-serif" }}
+                >
+                  ⛰ FIND MY TIER →
+                </span>
+              </div>
+            </div>
+          </a>
+        </section>
+
         {/* ROADMAP */}
         <Roadmap />
 
