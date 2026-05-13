@@ -483,6 +483,8 @@ input { font-family: inherit; }
         amountHuman: amtStr,
         slippageBps: STATE.slipBps,
         account: STATE.account,
+        onWrapStarted: () => setStatus('info', 'Step 1 · Wrapping MON → WMON for clean route. Sign in wallet.'),
+        onWrapConfirmed: () => setStatus('info', 'Wrap confirmed. Approving WMON…'),
         onApproveStarted: () => setStatus('info', 'Approving ' + STATE.from.symbol + '… sign in wallet.'),
         onApproveConfirmed: () => setStatus('info', 'Approval confirmed. Sign the swap…'),
       });
