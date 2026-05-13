@@ -1,0 +1,43 @@
+{
+  "name": "MONI · The Yeti of Monad",
+  "short_name": "MONI",
+  "description": "MONI — the purple yeti of Monad. CTO-run memecoin on Monad mainnet.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#050211",
+  "theme_color": "#a855f7",
+  "orientation": "portrait",
+  "categories": ["finance", "social"],
+  "icons": [
+    {
+      "src": "/Moni.png",
+      "type": "image/png",
+      "sizes": "1024x1024",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Buy MONI",
+      "short_name": "Swap",
+      "url": "/swap",
+      "icons": [{ "src": "/Moni.png", "sizes": "1024x1024" }]
+    },
+    {
+      "name": "The Pantheon",
+      "short_name": "Pantheon",
+      "url": "/pantheon"
+    },
+    {
+      "name": "Contact",
+      "short_name": "Contact",
+      "url": "/contact"
+    }
+  ]
+}

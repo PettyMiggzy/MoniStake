@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import Roadmap from "@/components/Roadmap";
 import Gallery from "@/components/Gallery";
+import Faq from "@/components/Faq";
 
 const MONI_ADDR = "0x0cc9b2e2acd7bacff79eb7db48f5662b622e7777";
 const DEXSCREENER_PAIR = "0x0198833561e4b64afa593cc3e90f446933ac2a9a";
@@ -293,6 +294,9 @@ export default function Home() {
 
         {/* GALLERY */}
         <Gallery />
+
+        {/* FAQ */}
+        <Faq />
 
         {/* SOCIAL FOOTER */}
         <section className="mb-6 flex flex-wrap items-center justify-center gap-3 text-xs">
