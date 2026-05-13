@@ -406,7 +406,6 @@
       }
       if (STATE.account){
         $('actionBtn').disabled = false;
-        const fromNative = STATE.from.address === NATIVE;
         $('actionBtn').textContent = '🔁 SWAP ' + STATE.from.symbol + ' → ' + STATE.to.symbol;
       }
       setStatus('', '');
