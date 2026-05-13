@@ -6,7 +6,7 @@
 <title>SWAP · MONI — Any Monad token</title>
 <meta name="description" content="Swap any token on Monad. Native MONI deep-link. Powered by the Monad DEX aggregator.">
 <meta property="og:title" content="🔁 SWAP · MONI">
-<meta property="og:description" content="Universal Monad swap — built for the MONI community. Any token to any token.">
+<meta property="og:description" content="Universal Monad swap for the MONI yeti community's home turf. Any token to any token.">
 <meta property="og:image" content="/Moni.png">
 <meta name="theme-color" content="#FFD757">
 
@@ -14,55 +14,10 @@
 <link rel="apple-touch-icon" href="/Moni.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Space+Grotesk:wght@400;500;700&family=Bungee&display=swap" rel="stylesheet">
-
+<link rel="stylesheet" href="styles.css">
 
 <style>
-/* MONI swap — self-contained base styles (no external stylesheet needed) */
-:root {
-  --bg: #0a0612;
-  --bg-2: #1a0d2e;
-  --ink: #f3eefe;
-  --ink-dim: #b9a8d8;
-  --purple: #a855f7;
-  --purple-deep: #6b21a8;
-  --purple-soft: #c4a3ff;
-  --magenta: #d946ef;
-  --pink: #ec4899;
-  --pink-soft: #f9a8d4;
-  --gold: #fbbf24;
-  --green: #7ce4c6;
-  --orange: #ffb36b;
-  --ember: #ff7a2a;
-  --card: rgba(255, 255, 255, 0.05);
-  --card-stroke: rgba(168, 85, 247, 0.18);
-  --radius: 18px;
-  --radius-sm: 10px;
-  --max: 1180px;
-}
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'Space Grotesk', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  color: var(--ink);
-  background: var(--bg);
-  background-image:
-    radial-gradient(1200px 600px at 80% -10%, rgba(168, 85, 247, 0.35), transparent 60%),
-    radial-gradient(900px 500px at -10% 30%, rgba(217, 70, 239, 0.20), transparent 60%),
-    radial-gradient(800px 600px at 50% 110%, rgba(196, 163, 255, 0.15), transparent 60%);
-  overflow-x: hidden;
-  line-height: 1.55;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
-a { color: inherit; }
-img { display: block; max-width: 100%; height: auto; }
-.container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
-button { font-family: inherit; cursor: pointer; }
-input { font-family: inherit; }
-</style>
-<style>
-/* Swap-specific styles (rebranded for MONI) */
+/* Swap-specific styles — keep moyaki's palette + typography */
 .swap-wrap{max-width:560px;margin:0 auto;padding:18px 18px 60px;}
 
 .swap-topbar{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;margin-bottom:24px;border-bottom:1px solid rgba(255,255,255,.08);}
@@ -223,11 +178,11 @@ input { font-family: inherit; }
 
   <div class="slip-row">
     <span>SLIPPAGE</span>
+    <div class="slip-pill" data-slip="50">0.5%</div>
     <div class="slip-pill" data-slip="100">1%</div>
+    <div class="slip-pill active" data-slip="300">3%</div>
     <div class="slip-pill" data-slip="500">5%</div>
-    <div class="slip-pill active" data-slip="1000">10%</div>
-    <div class="slip-pill" data-slip="2000">20%</div>
-    <div class="slip-pill" data-slip="3000">30%</div>
+    <div class="slip-pill" data-slip="1000">10%</div>
   </div>
 
   <div id="impactWarn" style="display:none;"></div>
@@ -242,7 +197,7 @@ input { font-family: inherit; }
 
   <div class="status" id="status"></div>
 
-  <p class="note">Powered by the Monad DEX aggregator. Best routes across every venue. 1% of every swap flows to the MONI treasury.</p>
+  <p class="note">Powered by the Monad DEX aggregator. Best routes across every major venue. Send it.</p>
 </div>
 
 <footer style="margin-top:30px;text-align:center;font-family:'Space Grotesk',sans-serif;font-size:10px;color:var(--ink-dim);letter-spacing:.5px;line-height:1.7;">
@@ -295,7 +250,7 @@ input { font-family: inherit; }
     from: KNOWN[0],   // MON
     to:   KNOWN[1],   // MONI
     account: null,
-    slipBps: 1000,
+    slipBps: 300,
     quote: null,
     quoteSeq: 0,
     pickingFor: null,
@@ -452,8 +407,7 @@ input { font-family: inherit; }
       if (STATE.account){
         $('actionBtn').disabled = false;
         const fromNative = STATE.from.address === NATIVE;
-        const verb = fromNative ? 'SWAP' : 'APPROVE + SWAP';
-        $('actionBtn').textContent = '🔁 ' + verb + ' ' + STATE.from.symbol + ' → ' + STATE.to.symbol;
+        $('actionBtn').textContent = '🔁 SWAP ' + STATE.from.symbol + ' → ' + STATE.to.symbol;
       }
       setStatus('', '');
     }catch(e){
@@ -483,8 +437,6 @@ input { font-family: inherit; }
         amountHuman: amtStr,
         slippageBps: STATE.slipBps,
         account: STATE.account,
-        onWrapStarted: () => setStatus('info', 'Step 1 · Wrapping MON → WMON for clean route. Sign in wallet.'),
-        onWrapConfirmed: () => setStatus('info', 'Wrap confirmed. Approving WMON…'),
         onApproveStarted: () => setStatus('info', 'Approving ' + STATE.from.symbol + '… sign in wallet.'),
         onApproveConfirmed: () => setStatus('info', 'Approval confirmed. Sign the swap…'),
       });
