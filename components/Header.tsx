@@ -9,7 +9,6 @@ const NAV = [
   { label: "Roadmap", href: "/#roadmap" },
   { label: "Gallery", href: "/#gallery" },
   { label: "Submit", href: "/#submit", highlight: true },
-  { label: "Monitain", href: "/monitain" },
   { label: "Swap", href: "/swap" },
   { label: "Monad", href: "https://www.monad.xyz", external: true },
 ];
