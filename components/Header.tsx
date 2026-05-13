@@ -11,6 +11,7 @@ const NAV = [
   { label: "Pantheon", href: "/pantheon" },
   { label: "Submit", href: "/#submit", highlight: true },
   { label: "Swap", href: "/swap" },
+  { label: "Bridge", href: "https://bridge.monad.xyz", external: true },
   { label: "Contact", href: "/contact" },
   { label: "Monad", href: "https://www.monad.xyz", external: true },
 ];

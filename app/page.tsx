@@ -156,6 +156,14 @@ export default function Home() {
                 Buy $MONI →
               </a>
               <a
+                href="https://bridge.monad.xyz"
+                target="_blank"
+                rel="noopener"
+                className="rounded-2xl border border-purple-400/30 bg-purple-500/10 px-6 py-3.5 text-sm font-semibold uppercase tracking-[0.15em] text-purple-100 hover:border-yellow-400/40 hover:bg-purple-500/20"
+              >
+                🌉 Bridge to Monad ↗
+              </a>
+              <a
                 href={`https://dexscreener.com/monad/${DEXSCREENER_PAIR}`}
                 target="_blank"
                 rel="noopener"
