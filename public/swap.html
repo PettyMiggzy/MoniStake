@@ -223,11 +223,11 @@ input { font-family: inherit; }
 
   <div class="slip-row">
     <span>SLIPPAGE</span>
-    <div class="slip-pill" data-slip="50">0.5%</div>
     <div class="slip-pill" data-slip="100">1%</div>
-    <div class="slip-pill active" data-slip="300">3%</div>
     <div class="slip-pill" data-slip="500">5%</div>
-    <div class="slip-pill" data-slip="1000">10%</div>
+    <div class="slip-pill active" data-slip="1000">10%</div>
+    <div class="slip-pill" data-slip="2000">20%</div>
+    <div class="slip-pill" data-slip="3000">30%</div>
   </div>
 
   <div id="impactWarn" style="display:none;"></div>
@@ -295,7 +295,7 @@ input { font-family: inherit; }
     from: KNOWN[0],   // MON
     to:   KNOWN[1],   // MONI
     account: null,
-    slipBps: 300,
+    slipBps: 1000,
     quote: null,
     quoteSeq: 0,
     pickingFor: null,

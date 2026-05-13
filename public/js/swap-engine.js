@@ -92,7 +92,7 @@ async function monorailQuote({from, to, amount, sender, slippageBps, deadlineSec
     to,
     amount: String(amount),
     sender,
-    slippage: String(slippageBps || 100),
+    slippage: String(slippageBps || 1000),
     source: MONORAIL.APP_ID,
   });
   if (deadlineSec) params.set('deadline', String(deadlineSec));
@@ -230,7 +230,7 @@ function explainRevert(err){
   if (low.includes('insufficient balance') || low.includes('insufficient funds'))
     return 'Not enough balance to cover this trade + gas.';
   if (low.includes('insufficient_output_amount') || low.includes('amount_out_min') || low.includes('slippage'))
-    return 'Slippage too tight — price moved between quote and execution. Try 3% or 5%.';
+    return 'Slippage too tight for MONI\'s thin pool. Bump to 20% or 30% and retry.';
   if (low.includes('expired') || low.includes('deadline'))
     return 'Tx deadline passed. Retry the trade.';
   if (low.includes('transfer_failed') || low.includes('transfer failed'))
